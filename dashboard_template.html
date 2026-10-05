@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My DeskTime</title>
+<style>
+:root{
+  color-scheme:light dark;
+  --bg:#f6f7f9; --card:#fff; --ink:#1d2330; --muted:#6b7280; --line:#e5e7eb; --track:#eef0f3; --accent:#2f9e44;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#111418; --card:#1a1f26; --ink:#e7eaee; --muted:#9aa3ad; --line:#2a313a; --track:#232a33; --accent:#51cf66; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 16px 60px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+h1{font-size:22px;margin:0}
+.sub{color:var(--muted);font-size:12px}
+.nav{display:flex;align-items:center;gap:8px}
+.nav button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px}
+.nav button:disabled{opacity:.35;cursor:default}
+.nav .day{font-weight:600;min-width:170px;text-align:center}
+.grid{display:grid;gap:14px}
+.tiles{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.tile .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.tile .v{font-size:26px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+.tile .s{color:var(--muted);font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+h2{font-size:15px;margin:0 0 12px}
+.two{grid-template-columns:1fr 1fr}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+.section{margin-top:14px}
+
+/* timeline */
+.tl{position:relative;height:46px;background:var(--track);border-radius:8px;overflow:hidden}
+.tl .seg{position:absolute;top:0;bottom:0;min-width:1px}
+.tl .seg:hover{filter:brightness(1.15);outline:2px solid var(--ink);z-index:2}
+.ticks{position:relative;height:18px;margin-top:4px;color:var(--muted);font-size:11px}
+.ticks span{position:absolute;transform:translateX(-50%)}
+.tip{position:fixed;pointer-events:none;background:#111;color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;max-width:340px;z-index:10;display:none;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.tip b{display:block}
+
+/* bars */
+.stack{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--track);margin-bottom:14px}
+.row{display:grid;grid-template-columns:14px 1fr auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.dot{width:10px;height:10px;border-radius:3px}
+.name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar{height:6px;border-radius:3px;margin-top:4px;background:var(--track)}
+.bar i{display:block;height:100%;border-radius:3px}
+.t{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;text-align:right}
+.click{cursor:pointer}
+.click:hover .name{text-decoration:underline}
+.detail{grid-column:2/4;font-size:12px;color:var(--muted);padding:4px 0 2px}
+.detail div{display:flex;justify-content:space-between;gap:10px;padding:2px 0}
+.detail span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* hourly */
+.hours{display:grid;grid-template-columns:repeat(24,1fr);gap:3px;height:140px;align-items:end}
+.hcol{display:flex;flex-direction:column-reverse;height:100%;background:var(--track);border-radius:4px;overflow:hidden}
+.hlabels{display:grid;grid-template-columns:repeat(24,1fr);gap:3px;color:var(--muted);font-size:10px;text-align:center;margin-top:4px}
+
+/* week */
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:150px}
+.wd{display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;cursor:pointer}
+.wd .col{width:100%;max-width:46px;display:flex;flex-direction:column-reverse;border-radius:6px;overflow:hidden;background:var(--track);min-height:3px}
+.wd .lbl{font-size:11px;color:var(--muted)}
+.wd .val{font-size:11px;font-variant-numeric:tabular-nums}
+.wd.sel .lbl{color:var(--ink);font-weight:700}
+
+/* log */
+.log{max-height:420px;overflow:auto}
+.log .row{grid-template-columns:96px 14px 1fr auto}
+.log .when{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px}
+.empty{color:var(--muted);text-align:center;padding:40px 0}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>My DeskTime</h1>
+      <div class="sub" id="gen"></div>
+    </div>
+    <div class="nav">
+      <button id="prev" title="Pichla din">‹</button>
+      <div class="day" id="dayLabel"></div>
+      <button id="next" title="Agla din">›</button>
+    </div>
+  </header>
+
+  <div id="main"></div>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+const DATA = /*__DATA__*/null;
+const CATS = DATA.categories;
+const dayKeys = Object.keys(DATA.days).sort();
+const $ = s => document.querySelector(s);
+const color = c => (CATS[c] || CATS.Other).color;
+const esc = s => String(s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+
+function fmt(sec){
+  sec = Math.round(sec);
+  const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60);
+  if (h) return `${h}h ${String(m).padStart(2,'0')}m`;
+  if (m) return `${m}m`;
+  return `${sec}s`;
+}
+function clock(sec){
+  const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60);
+  const ap = h >= 12 ? 'PM' : 'AM', hh = (h % 12) || 12;
+  return `${hh}:${String(m).padStart(2,'0')} ${ap}`;
+}
+function hourLbl(h){ const ap = h>=12?'p':'a'; return ((h%12)||12)+ap; }
+function todayKey(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function niceDate(k){
+  const d = new Date(k+'T00:00:00');
+  const label = d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+  if (k === todayKey()) return 'Today · ' + label;
+  return label;
+}
+function sum(map, k, v){ map[k] = (map[k]||0) + v; }
+function sorted(map){ return Object.entries(map).sort((a,b)=>b[1]-a[1]); }
+function where(r){ return r[4] || r[2]; }   // website ho to domain, warna app
+
+let current = dayKeys.includes(todayKey()) ? todayKey() : dayKeys[dayKeys.length-1];
+let openApp = null;
+
+function render(){
+  $('#gen').textContent = 'Last updated: ' + DATA.generated + ' · report.py dobara chalao naya data dekhne ke liye';
+  if (!current){
+    $('#dayLabel').textContent = '—';
+    $('#prev').disabled = $('#next').disabled = true;
+    $('#main').innerHTML = `<div class="card empty">Abhi koi data nahi hai.<br>Pehle <b>tracker.py</b> chalao, thoda kaam karo, fir <b>report.py</b> chalao.</div>`;
+    return;
+  }
+  const i = dayKeys.indexOf(current);
+  $('#prev').disabled = i <= 0;
+  $('#next').disabled = i >= dayKeys.length-1;
+  $('#dayLabel').textContent = niceDate(current);
+
+  const rows = DATA.days[current];
+  const byCat = {}, byApp = {}, bySite = {}, appTitles = {}, hours = Array.from({length:24},()=>({}));
+  let total = 0, prod = 0, unprod = 0;
+  for (const r of rows){
+    const [s,e,app,title,domain,cat] = r, d = e - s;
+    total += d;
+    sum(byCat, cat, d); sum(byApp, app, d);
+    if (domain) sum(bySite, domain, d);
+    appTitles[app] = appTitles[app] || {}; sum(appTitles[app], domain || title || '(no title)', d);
+    const p = (CATS[cat]||{}).productive;
+    if (p === true) prod += d; else if (p === false) unprod += d;
+    // ghante ke hisaab se baanto
+    let t = s;
+    while (t < e){
+      const h = Math.floor(t/3600), end = Math.min(e, (h+1)*3600);
+      sum(hours[Math.min(h,23)], cat, end - t); t = end;
+    }
+  }
+  const first = rows[0][0], last = rows[rows.length-1][1];
+  const topApp = sorted(byApp)[0];
+  const appCat = {}; rows.forEach(r => { const a = r[2]; appCat[a] = (appCat[a] === undefined || appCat[a] === r[5]) ? r[5] : 'Other'; });  // browser jaise mixed apps = Other
+  const siteCat = {}; rows.forEach(r => { if (r[4]) siteCat[r[4]] = siteCat[r[4]] || r[5]; });
+
+  // timeline range: pehli activity ke ghante se aakhri tak
+  const h0 = Math.floor(first/3600), h1 = Math.min(24, Math.ceil(last/3600));
+  const span = Math.max(1,(h1-h0))*3600, off = h0*3600;
+  const segs = rows.map((r,idx) => `<div class="seg" data-i="${idx}" style="left:${(r[0]-off)/span*100}%;width:${(r[1]-r[0])/span*100}%;background:${color(r[5])}"></div>`).join('');
+  const step = (h1-h0) > 12 ? 2 : 1;
+  let ticks = '';
+  for (let h=h0; h<=h1; h+=step) ticks += `<span style="left:${(h*3600-off)/span*100}%">${hourLbl(h%24)}</span>`;
+
+  const catOrder = sorted(byCat);
+  const stack = catOrder.map(([c,v]) => `<div title="${esc(c)} ${fmt(v)}" style="width:${v/total*100}%;background:${color(c)}"></div>`).join('');
+  const catRows = catOrder.map(([c,v]) => row(c, v, total, color(c), `${Math.round(v/total*100)}%`)).join('');
+
+  const maxApp = topApp[1];
+  const appRows = sorted(byApp).slice(0,15).map(([a,v]) => {
+    let html = row(a, v, maxApp, color(appCat[a]), '', `click" data-app="${esc(a)}`);
+    if (openApp === a){
+      const det = sorted(appTitles[a]).slice(0,12).map(([t,tv]) => `<div><span>${esc(t)}</span><span>${fmt(tv)}</span></div>`).join('');
+      html = html.replace(/<\/div>$/, '') + `<div class="detail">${det}</div></div>`;
+    }
+    return html;
+  }).join('');
+  const sites = sorted(bySite).slice(0,15);
+  const siteRows = sites.length ? sites.map(([s,v]) => row(s, v, sites[0][1], color(siteCat[s]))).join('')
+                                : `<div class="sub">Browser (Chrome / Safari / Brave / Edge / Arc) ki website yahan dikhegi.</div>`;
+
+  const maxHour = 3600;
+  const hourCols = hours.map((hm,h) => {
+    const parts = sorted(hm).map(([c,v]) => `<div title="${hourLbl(h)} · ${esc(c)} ${fmt(v)}" style="height:${v/maxHour*100}%;background:${color(c)}"></div>`).join('');
+    return `<div class="hcol">${parts}</div>`;
+  }).join('');
+  const hourLabels = hours.map((_,h) => `<div>${h%3===0?hourLbl(h):''}</div>`).join('');
+
+  // week: current din tak ke last 7 din
+  const cd = new Date(current+'T00:00:00'), week = [];
+  for (let k=6;k>=0;k--){
+    const d = new Date(cd); d.setDate(cd.getDate()-k);
+    const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const wc = {}; let wt = 0;
+    (DATA.days[key]||[]).forEach(r => { sum(wc, r[5], r[1]-r[0]); wt += r[1]-r[0]; });
+    week.push({key, d, wc, wt});
+  }
+  const wmax = Math.max(3600, ...week.map(w=>w.wt));
+  const weekCols = week.map(w => `<div class="wd ${w.key===current?'sel':''}" data-day="${w.key}">
+      <div class="val">${w.wt?fmt(w.wt):''}</div>
+      <div class="col" style="height:${w.wt/wmax*100}%">${sorted(w.wc).map(([c,v])=>`<div style="height:${v/w.wt*100}%;background:${color(c)}"></div>`).join('')}</div>
+      <div class="lbl">${w.d.toLocaleDateString('en-IN',{weekday:'short'})} ${w.d.getDate()}</div></div>`).join('');
+
+  // log: lagatar same app/site ko ek session maano, 1 min se chhote hata do
+  const sessions = [];
+  for (const r of rows){
+    const lastS = sessions[sessions.length-1], w = where(r);
+    if (lastS && lastS.w === w && r[0] - lastS.e < 120){ lastS.e = r[1]; lastS.d += r[1]-r[0]; }
+    else sessions.push({s:r[0], e:r[1], d:r[1]-r[0], w, cat:r[5], title:r[3]});
+  }
+  const logRows = sessions.filter(x => x.d >= 60).reverse().map(x =>
+    `<div class="row"><div class="when">${clock(x.s)}</div><div class="dot" style="background:${color(x.cat)}"></div>
+     <div class="name" title="${esc(x.title)}">${esc(x.w)} <span class="sub">${esc(x.title && x.title!==x.w ? '— '+x.title : '')}</span></div><div class="t">${fmt(x.d)}</div></div>`).join('');
+
+  const legend = Object.keys(CATS).filter(c => byCat[c]).map(c => `<span><i class="dot" style="background:${color(c)}"></i>${esc(c)}</span>`).join('');
+  const prodPct = total ? Math.round(prod/total*100) : 0;
+
+  $('#main').innerHTML = `
+  <div class="grid tiles">
+    <div class="card tile"><div class="k">Total active</div><div class="v">${fmt(total)}</div><div class="s">computer pe actual kaam</div></div>
+    <div class="card tile"><div class="k">Productive</div><div class="v" style="color:var(--accent)">${prodPct}%</div><div class="s">${fmt(prod)} productive · ${fmt(unprod)} distraction</div></div>
+    <div class="card tile"><div class="k">Day</div><div class="v" style="font-size:20px">${clock(first)}</div><div class="s">se ${clock(last)} tak</div></div>
+    <div class="card tile"><div class="k">Sabse zyada</div><div class="v" style="font-size:20px">${esc(topApp[0])}</div><div class="s">${fmt(topApp[1])}</div></div>
+  </div>
+
+  <div class="card section">
+    <h2>Timeline — kis time kya kiya</h2>
+    <div class="tl" id="tl">${segs}</div>
+    <div class="ticks">${ticks}</div>
+    <div class="legend">${legend}</div>
+  </div>
+
+  <div class="grid two section">
+    <div class="card"><h2>Category</h2><div class="stack">${stack}</div>${catRows}</div>
+    <div class="card"><h2>Har ghante me kitna kaam</h2><div class="hours">${hourCols}</div><div class="hlabels">${hourLabels}</div></div>
+  </div>
+
+  <div class="grid two section">
+    <div class="card"><h2>Apps <span class="sub">(click karo detail ke liye)</span></h2>${appRows}</div>
+    <div class="card"><h2>Websites</h2>${siteRows}</div>
+  </div>
+
+  <div class="grid two section">
+    <div class="card"><h2>Is hafte</h2><div class="week">${weekCols}</div></div>
+    <div class="card"><h2>Activity log</h2><div class="log">${logRows || '<div class="sub">1 min se lambi koi activity nahi.</div>'}</div></div>
+  </div>`;
+
+  // events
+  const tip = $('#tip');
+  $('#tl').addEventListener('mousemove', ev => {
+    const el = ev.target.closest('.seg');
+    if (!el){ tip.style.display='none'; return; }
+    const r = rows[+el.dataset.i];
+    tip.innerHTML = `<b>${esc(r[4] || r[2])}</b>${esc(r[3])}<br><span style="opacity:.7">${clock(r[0])} – ${clock(r[1])} · ${fmt(r[1]-r[0])} · ${esc(r[5])}</span>`;
+    tip.style.display = 'block';
+    tip.style.left = Math.min(ev.clientX + 12, innerWidth - 360) + 'px';
+    tip.style.top = (ev.clientY + 14) + 'px';
+  });
+  $('#tl').addEventListener('mouseleave', () => tip.style.display='none');
+  document.querySelectorAll('[data-app]').forEach(el => el.onclick = () => { openApp = openApp === el.dataset.app ? null : el.dataset.app; render(); });
+  document.querySelectorAll('[data-day]').forEach(el => el.onclick = () => { if (DATA.days[el.dataset.day]){ current = el.dataset.day; openApp = null; render(); } });
+}
+
+function row(name, v, max, col, extra='', cls=''){
+  return `<div class="row ${cls}"><div class="dot" style="background:${col}"></div>
+    <div><div class="name">${esc(name)}</div><div class="bar"><i style="width:${v/max*100}%;background:${col}"></i></div></div>
+    <div class="t">${fmt(v)}${extra ? '<br>'+extra : ''}</div></div>`;
+}
+
+$('#prev').onclick = () => { const i = dayKeys.indexOf(current); if (i>0){ current = dayKeys[i-1]; openApp=null; render(); } };
+$('#next').onclick = () => { const i = dayKeys.indexOf(current); if (i<dayKeys.length-1){ current = dayKeys[i+1]; openApp=null; render(); } };
+document.addEventListener('keydown', e => { if (e.key==='ArrowLeft') $('#prev').click(); if (e.key==='ArrowRight') $('#next').click(); });
+render();
+</script>
+</body>
+</html>

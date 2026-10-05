@@ -1,0 +1,91 @@
+{
+  "_help": "Pehle 'domains' match hote hain (website, part-match chalega), fir 'apps' (app ka poora naam, lowercase). Jo match na ho wo 'Other'.",
+  "categories": {
+    "Work": {
+      "color": "#2f9e44",
+      "productive": true
+    },
+    "Communication": {
+      "color": "#1c7ed6",
+      "productive": true
+    },
+    "Learning": {
+      "color": "#7048e8",
+      "productive": true
+    },
+    "Design": {
+      "color": "#e8590c",
+      "productive": true
+    },
+    "Social Media": {
+      "color": "#e64980",
+      "productive": false
+    },
+    "Entertainment": {
+      "color": "#f03e3e",
+      "productive": false
+    },
+    "Other": {
+      "color": "#868e96",
+      "productive": null
+    }
+  },
+  "domains": {
+    "github.com": "Work",
+    "claude.ai": "Work",
+    "docs.google.com": "Work",
+    "sheets.google.com": "Work",
+    "drive.google.com": "Work",
+    "notion.so": "Work",
+    "localhost": "Work",
+    "mail.google.com": "Communication",
+    "web.whatsapp.com": "Communication",
+    "meet.google.com": "Communication",
+    "slack.com": "Communication",
+    "stackoverflow.com": "Learning",
+    "developer.mozilla.org": "Learning",
+    "w3schools.com": "Learning",
+    "canva.com": "Design",
+    "figma.com": "Design",
+    "linkedin.com": "Social Media",
+    "instagram.com": "Social Media",
+    "facebook.com": "Social Media",
+    "x.com": "Social Media",
+    "twitter.com": "Social Media",
+    "reddit.com": "Social Media",
+    "youtube.com": "Entertainment",
+    "netflix.com": "Entertainment",
+    "primevideo.com": "Entertainment",
+    "hotstar.com": "Entertainment"
+  },
+  "apps": {
+    "code": "Work",
+    "visual studio code": "Work",
+    "terminal": "Work",
+    "claude": "Work",
+    "xcode": "Work",
+    "numbers": "Work",
+    "pages": "Work",
+    "notes": "Work",
+    "finder": "Work",
+    "preview": "Work",
+    "whatsapp": "Communication",
+    "slack": "Communication",
+    "zoom.us": "Communication",
+    "mail": "Communication",
+    "messages": "Communication",
+    "facetime": "Communication",
+    "figma": "Design",
+    "canva": "Design",
+    "photoshop": "Design",
+    "final cut": "Design",
+    "spotify": "Entertainment",
+    "music": "Entertainment",
+    "microsoft word": "Work",
+    "microsoft excel": "Work",
+    "iterm2": "Work",
+    "tv": "Entertainment",
+    "google chrome": "Other",
+    "safari": "Other"
+  }
+}
