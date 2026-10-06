@@ -3,287 +3,1228 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>My DeskTime</title>
+<!-- Only inline code runs; the page cannot send requests or forms anywhere -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<title>DeskTime</title>
 <style>
 :root{
   color-scheme:light dark;
-  --bg:#f6f7f9; --card:#fff; --ink:#1d2330; --muted:#6b7280; --line:#e5e7eb; --track:#eef0f3; --accent:#2f9e44;
+  --canvas:#f3f4f6; --surface:#ffffff; --sunk:#f7f8fa; --ink:#1d1f24; --muted:#5d6068; --faint:#8b8e96; --line:#e4e6ea;
+  --prod:#3a9d5d; --unprod:#d9605a; --neutral:#c9ccd2; --sel-bg:#1d1f24; --sel-ink:#ffffff; --accent:#2f6fe4; --accent-soft:#e9f0fd;
+  --brk:#b7bcc4;
+  --ribbon-bg:#eceef1;
+  --r-lg:20px; --r-md:12px; --r-sm:8px;
+  --num:ui-rounded,"SF Pro Rounded",system-ui,-apple-system,sans-serif;
+  --text:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
+/* Theme: Auto (system ke hisaab se), ya sidebar se Light / Dark chuno */
 @media (prefers-color-scheme: dark){
-  :root{ --bg:#111418; --card:#1a1f26; --ink:#e7eaee; --muted:#9aa3ad; --line:#2a313a; --track:#232a33; --accent:#51cf66; }
+  :root:not([data-theme="light"]){ color-scheme:dark; --canvas:#1b1c1f; --surface:#242529; --sunk:#2c2d32; --ink:#ececef; --muted:#a9abb3; --faint:#7a7c85; --line:#34363c;
+         --prod:#4caf6e; --unprod:#d9706b; --neutral:#55585f; --accent:#6ea8ff; --accent-soft:#2a3446; --ribbon-bg:#2f3136;
+         --sel-bg:#6ea8ff; --sel-ink:#111317; --brk:#5d6168; }
 }
+:root[data-theme="dark"]{ color-scheme:dark; --canvas:#1b1c1f; --surface:#242529; --sunk:#2c2d32; --ink:#ececef; --muted:#a9abb3; --faint:#7a7c85; --line:#34363c;
+         --prod:#4caf6e; --unprod:#d9706b; --neutral:#55585f; --accent:#6ea8ff; --accent-soft:#2a3446; --ribbon-bg:#2f3136;
+         --sel-bg:#6ea8ff; --sel-ink:#111317; }
+:root[data-theme="light"]{ color-scheme:light; }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-.wrap{max-width:1100px;margin:0 auto;padding:24px 16px 60px}
-header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
-h1{font-size:22px;margin:0}
-.sub{color:var(--muted);font-size:12px}
-.nav{display:flex;align-items:center;gap:8px}
-.nav button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px}
-.nav button:disabled{opacity:.35;cursor:default}
-.nav .day{font-weight:600;min-width:170px;text-align:center}
-.grid{display:grid;gap:14px}
-.tiles{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
-.tile .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
-.tile .v{font-size:26px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
-.tile .s{color:var(--muted);font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-h2{font-size:15px;margin:0 0 12px}
-.two{grid-template-columns:1fr 1fr}
-@media (max-width:760px){.two{grid-template-columns:1fr}}
-.section{margin-top:14px}
+html,body{margin:0}
+body{background:var(--canvas);color:var(--ink);font:14px/1.5 var(--text);-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)} .faint{color:var(--faint)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 
-/* timeline */
-.tl{position:relative;height:46px;background:var(--track);border-radius:8px;overflow:hidden}
-.tl .seg{position:absolute;top:0;bottom:0;min-width:1px}
-.tl .seg:hover{filter:brightness(1.15);outline:2px solid var(--ink);z-index:2}
-.ticks{position:relative;height:18px;margin-top:4px;color:var(--muted);font-size:11px}
-.ticks span{position:absolute;transform:translateX(-50%)}
-.tip{position:fixed;pointer-events:none;background:#111;color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;max-width:340px;z-index:10;display:none;box-shadow:0 6px 20px rgba(0,0,0,.25)}
-.tip b{display:block}
+/* ---------- shell ---------- */
+.shell{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100vh}
+aside{background:var(--surface);border-right:1px solid var(--line);padding:22px 18px;display:flex;flex-direction:column;gap:22px;position:sticky;top:0;height:100vh;overflow:auto}
+.brand{display:flex;align-items:center;gap:10px;font:600 17px var(--num)}
+.brand svg{flex:none}
+.views{display:flex;flex-direction:column;gap:2px}
+.views button{display:flex;justify-content:space-between;align-items:center;border:0;background:none;padding:8px 10px;border-radius:var(--r-sm);cursor:pointer;text-align:left;color:var(--muted)}
+.views button:hover{background:var(--sunk);color:var(--ink)}
+.views button.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.views kbd{font:11px var(--text);color:var(--faint)}
 
-/* bars */
-.stack{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--track);margin-bottom:14px}
-.row{display:grid;grid-template-columns:14px 1fr auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
-.row:last-child{border-bottom:0}
-.dot{width:10px;height:10px;border-radius:3px}
-.name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bar{height:6px;border-radius:3px;margin-top:4px;background:var(--track)}
-.bar i{display:block;height:100%;border-radius:3px}
-.t{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;text-align:right}
-.click{cursor:pointer}
-.click:hover .name{text-decoration:underline}
-.detail{grid-column:2/4;font-size:12px;color:var(--muted);padding:4px 0 2px}
-.detail div{display:flex;justify-content:space-between;gap:10px;padding:2px 0}
-.detail span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* mini calendar */
+.mini-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-weight:600}
+.mini-head button{border:0;background:none;cursor:pointer;color:var(--muted);padding:2px 6px;border-radius:6px}
+.mini-head button:hover{background:var(--sunk)}
+.mini{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:12px}
+.mini .w{color:var(--faint);font-size:10.5px;padding-bottom:2px}
+.mini button{border:0;background:none;padding:5px 0 7px;border-radius:7px;cursor:pointer;position:relative;font-variant-numeric:tabular-nums}
+.mini button:hover{background:var(--sunk)}
+.mini button[disabled]{color:var(--faint);opacity:.45;cursor:default;background:none}
+.mini button.has::after{content:"";position:absolute;left:50%;bottom:2px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--prod)}
+.mini button.today{color:var(--accent);font-weight:700}
+.mini button.sel{background:var(--sel-bg);color:var(--sel-ink)}
+.mini button.inrange{background:var(--accent-soft)}
 
-/* hourly */
-.hours{display:grid;grid-template-columns:repeat(24,1fr);gap:3px;height:140px;align-items:end}
-.hcol{display:flex;flex-direction:column-reverse;height:100%;background:var(--track);border-radius:4px;overflow:hidden}
-.hlabels{display:grid;grid-template-columns:repeat(24,1fr);gap:3px;color:var(--muted);font-size:10px;text-align:center;margin-top:4px}
+.theme{display:flex;background:var(--sunk);border-radius:9px;padding:3px;gap:2px;margin-top:auto}
+.theme button{flex:1;border:0;background:none;padding:4px 0;border-radius:7px;cursor:pointer;color:var(--muted);font-size:12.5px}
+.theme button.on{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(23,32,51,.12)}
+.privacy{background:var(--sunk);border-radius:var(--r-md);padding:12px 12px 13px;font-size:12.5px;color:var(--muted)}
+.privacy b{display:flex;align-items:center;gap:6px;color:var(--ink);font-size:13px;margin-bottom:4px}
 
-/* week */
-.week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:150px}
-.wd{display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;cursor:pointer}
-.wd .col{width:100%;max-width:46px;display:flex;flex-direction:column-reverse;border-radius:6px;overflow:hidden;background:var(--track);min-height:3px}
-.wd .lbl{font-size:11px;color:var(--muted)}
-.wd .val{font-size:11px;font-variant-numeric:tabular-nums}
-.wd.sel .lbl{color:var(--ink);font-weight:700}
+/* ---------- main ---------- */
+main{padding:26px 30px 60px;max-width:1200px;width:100%}
+.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.title h1{font:600 26px/1.2 var(--num);margin:0;letter-spacing:-.01em}
+.title p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.spacer{flex:1}
+.step{display:flex;gap:4px}
+.icon-btn{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-sm);cursor:pointer;color:var(--ink)}
+.icon-btn:disabled{opacity:.35;cursor:default}
+.text-btn{height:34px;padding:0 12px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-sm);cursor:pointer}
+.search{display:flex;align-items:center;gap:6px;height:34px;padding:0 10px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-sm);width:250px;color:var(--faint)}
+.search input{border:0;background:none;outline:none;width:100%;color:var(--ink)}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:18px 20px}
+.panel h2{font:600 15px var(--num);margin:0 0 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.panel h2 .hint{font:400 12.5px var(--text);color:var(--faint)}
+.stack{display:grid;gap:16px}
+.cols{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;align-items:start}
+
+/* ---------- hero: the day ribbon ---------- */
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px 26px 20px}
+.hero-top{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap}
+.big{font:600 54px/1 var(--num);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.big-label{color:var(--muted);margin-top:6px}
+.span{display:flex;align-items:center;gap:12px;margin-left:auto;font:500 15px var(--num);color:var(--muted)}
+.span strong{color:var(--ink);font-weight:600;font-size:18px}
+.span .line{width:44px;height:2px;background:var(--line);border-radius:2px}
+.live{display:inline-flex;align-items:center;gap:6px;color:var(--prod);font-weight:600}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--prod);box-shadow:0 0 0 4px color-mix(in srgb,var(--prod) 22%,transparent)}
+
+.ribbon{position:relative;margin-top:22px}
+.ribbon .lane{position:relative;height:34px;background:var(--ribbon-bg);border-radius:10px;overflow:hidden}
+.ribbon .lane.thin{height:10px;margin-top:5px;border-radius:5px}
+.ribbon .s{position:absolute;top:0;bottom:0;min-width:1.5px}
+.ribbon .s:hover{filter:brightness(1.12);box-shadow:inset 0 0 0 2px var(--ink);z-index:2}
+.ticks{position:relative;height:18px;margin-top:6px;color:var(--faint);font-size:11px}
+.ticks span{position:absolute;transform:translateX(-50%);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ticks span:first-child{transform:none}
+.ticks span:last-child{transform:translateX(-100%)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:12px;color:var(--muted)}
+.sw{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));margin-top:20px;border-top:1px solid var(--line);padding-top:16px}
+.stat{padding:0 16px;border-left:1px solid var(--line)}
+.stat:first-child{padding-left:0;border-left:0}
+.stat .v{font:600 22px/1.15 var(--num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.stat .k{color:var(--muted);font-size:12.5px;margin-top:3px}
+.stat .k small{color:var(--faint);display:block;font-size:11.5px}
+.meter{height:6px;border-radius:3px;background:var(--ribbon-bg);overflow:hidden;margin-top:8px;display:flex}
+
+/* ---------- lists ---------- */
+.tabs{display:inline-flex;background:var(--sunk);border-radius:9px;padding:3px;gap:2px}
+.tabs button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;color:var(--muted);font-weight:500}
+.tabs button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(23,32,51,.12)}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 10px}
+.filters button{border:1px solid var(--line);background:none;border-radius:20px;padding:2px 11px;font-size:12px;cursor:pointer;color:var(--muted)}
+.filters button.on{border-color:var(--ink);color:var(--ink);font-weight:600}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 14px;align-items:center;padding:9px 8px;border-radius:var(--r-sm);cursor:pointer}
+.item:hover{background:var(--sunk)}
+.item .nm{display:flex;align-items:center;gap:8px;min-width:0}
+.item .nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .tm{font:600 14px var(--num);font-variant-numeric:tabular-nums;text-align:right}
+.item .bar{grid-column:1/-1;height:4px;border-radius:2px;background:var(--ribbon-bg);overflow:hidden}
+.item .bar i{display:block;height:100%;border-radius:2px}
+.item .meta{display:flex;align-items:center;gap:8px;color:var(--faint);font-size:12px;justify-content:flex-end}
+.item select{border:1px solid var(--line);background:var(--surface);border-radius:6px;font-size:11.5px;padding:1px 3px;color:var(--muted);max-width:118px}
+.item.open{background:var(--sunk)}
+.detail{grid-column:1/-1;margin:6px 0 2px;padding:4px 0 2px 12px;border-left:2px solid var(--line);font-size:12.5px}
+.detail .d{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:4px 0}
+.detail .d > span:first-child{min-width:0}
+.detail .d .ttl{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.detail .d .url{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--faint);font-size:11.5px}
+.detail .d .t{font-family:var(--num);font-variant-numeric:tabular-nums;color:var(--muted)}
+.private-note{color:var(--faint);display:flex;gap:6px;align-items:center;padding:4px 0}
+.show-more{display:block;margin:8px auto 0;border:0;background:none;color:var(--accent);cursor:pointer;font-size:13px}
+.lock{color:var(--faint);flex:none}
+
+/* charts */
+.chart{width:100%;height:240px}
+.chart.tall{height:300px}
+
+/* month calendar */
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.cal .w{font-size:12px;color:var(--faint);padding-left:4px}
+.day{border-radius:var(--r-md);padding:9px 10px;min-height:88px;display:flex;flex-direction:column;cursor:pointer;background:var(--sunk);border:1px solid transparent}
+.day:hover{border-color:var(--line)}
+.day.empty{background:none;border:1px dashed var(--line);cursor:default}
+.day.future{opacity:.4}
+.day.today .n{color:var(--accent);font-weight:700}
+.day .n{font-size:12px;color:var(--muted)}
+.day .h{font:600 17px var(--num);font-variant-numeric:tabular-nums;margin-top:auto}
+.day .r{font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
+.day .meter{margin-top:5px;height:4px}
 
 /* log */
-.log{max-height:420px;overflow:auto}
-.log .row{grid-template-columns:96px 14px 1fr auto}
-.log .when{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px}
-.empty{color:var(--muted);text-align:center;padding:40px 0}
-.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:12px;color:var(--muted)}
-.legend span{display:inline-flex;align-items:center;gap:5px}
+.log{max-height:520px;overflow:auto;margin:0 -8px}
+.log .row{display:grid;grid-template-columns:72px 9px minmax(0,1fr) auto;gap:12px;align-items:center;padding:8px;border-radius:var(--r-sm)}
+.log .row:hover{background:var(--sunk)}
+.log .when{font-family:var(--num);font-variant-numeric:tabular-nums;color:var(--faint);font-size:12.5px}
+.log .what{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.log .what .app{color:var(--faint);margin-left:6px;font-size:12.5px}
+.log .tm{font:600 13px var(--num);font-variant-numeric:tabular-nums;color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:3px}
+
+.empty-state{text-align:center;padding:70px 20px;color:var(--muted)}
+.empty-state h3{font:600 18px var(--num);color:var(--ink);margin:0 0 6px}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--surface);padding:9px 11px;border-radius:9px;font-size:12px;max-width:420px;z-index:10;display:none;box-shadow:0 8px 24px rgba(0,0,0,.25);overflow-wrap:anywhere}
+.tip b{display:block;font-size:13px}
+.tip .o{opacity:.72}
+.foot{margin-top:22px;color:var(--faint);font-size:12px;text-align:center}
+
+/* breaks */
+.ribbon .s.brk{background:var(--brk);background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.35) 0 2px,transparent 2px 6px)}
+.onbreak{display:inline-flex;align-items:center;gap:6px;color:#b7791f;font-weight:600}
+.log .row.brk .what{color:var(--muted)}
+/* work */
+.proj{padding:12px 8px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:var(--r-sm)}
+.proj:last-child{border-bottom:0}
+.proj:hover{background:var(--sunk)}
+.proj .top-row{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:10px;align-items:center}
+.proj .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proj .tm{font:600 15px var(--num);font-variant-numeric:tabular-nums}
+.proj .ranges{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0 0 20px}
+.proj .ranges span{background:var(--sunk);border-radius:6px;padding:1px 7px;font:12px var(--num);color:var(--muted);font-variant-numeric:tabular-nums}
+.proj:hover .ranges span{background:var(--surface)}
+.proj .apps{margin:5px 0 0 20px;color:var(--faint);font-size:12px}
+.proj .tag{font:500 11px var(--text);color:var(--accent);background:var(--accent-soft);border-radius:5px;padding:1px 6px;margin-left:6px}
+.wt{position:relative;padding-left:4px}
+.wt .blk{display:grid;grid-template-columns:84px 4px minmax(0,1fr) auto;gap:12px;align-items:start;padding:8px 6px;border-radius:var(--r-sm)}
+.wt .blk:hover{background:var(--sunk)}
+.wt .blk .t{font:600 12.5px var(--num);font-variant-numeric:tabular-nums}
+.wt .blk .t small{display:block;font-weight:400;color:var(--faint)}
+.wt .blk .bar{width:4px;align-self:stretch;min-height:30px;border-radius:2px}
+.wt .blk .ttl{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt .blk .sub{color:var(--faint);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt .blk .d{font:600 12.5px var(--num);color:var(--muted)}
+.wt .blk.meet .bar{background-image:repeating-linear-gradient(180deg,rgba(255,255,255,.45) 0 3px,transparent 3px 6px)}
+.wt .blk.brk .ttl{color:var(--muted);font-weight:500}
+/* google */
+.gacc{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.gacc:last-child{border-bottom:0}
+.gacc b{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.gform{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin:10px 0}
+.gform input{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:6px 9px;color:var(--ink);min-width:0}
+details.steps summary{cursor:pointer;color:var(--accent);font-size:13px}
+details.steps ol{color:var(--muted);font-size:13px;padding-left:20px;margin:8px 0}
+details.steps li{margin:5px 0}
+.gtag{font-size:11px;color:var(--faint);white-space:nowrap}
+.task .when.overdue{color:var(--unprod);font-weight:600}
+.gerr{color:var(--unprod);font-size:13px;margin:6px 0}
+@media (max-width:900px){ .gform{grid-template-columns:1fr} }
+/* agenda */
+.agenda-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
+.ev{display:grid;grid-template-columns:88px 4px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 8px;border-radius:var(--r-sm)}
+.ev:hover{background:var(--sunk)}
+.ev.past{opacity:.5}
+.ev .t{font:600 13px var(--num);font-variant-numeric:tabular-nums}
+.ev .t small{display:block;font-weight:400;color:var(--faint)}
+.ev .bar{width:4px;height:34px;border-radius:2px}
+.ev .ttl{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev .sub{color:var(--faint);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev.now{background:var(--accent-soft)}
+.join{height:30px;padding:0 12px;border:0;border-radius:var(--r-sm);background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
+.now-line{display:flex;align-items:center;gap:8px;color:var(--unprod);font-size:12px;font-weight:600;margin:4px 8px}
+.now-line::after{content:"";flex:1;height:1px;background:var(--unprod)}
+.task{display:grid;grid-template-columns:20px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:8px;border-radius:var(--r-sm)}
+.task:hover{background:var(--sunk)}
+.task.done .ttl{text-decoration:line-through;color:var(--faint)}
+.task .when{font:12.5px var(--num);color:var(--muted);font-variant-numeric:tabular-nums}
+.task .del{border:0;background:none;color:var(--faint);cursor:pointer;font-size:16px;line-height:1;visibility:hidden}
+.task:hover .del{visibility:visible}
+.task-form{display:flex;gap:8px;margin-bottom:10px}
+.task-form input{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:6px 9px;color:var(--ink)}
+.task-form input[name=title]{flex:1;min-width:0}
+.connect ol{margin:8px 0 14px;padding-left:20px;color:var(--muted)} .connect li{margin:4px 0}
+.connect .btns{display:flex;gap:8px;flex-wrap:wrap}
+.tipbox{background:var(--sunk);border-radius:var(--r-md);padding:12px 14px;font-size:13px;color:var(--muted)}
+.tipbox b{color:var(--ink)}
+@media (max-width:900px){ .agenda-grid{grid-template-columns:1fr} }
+/* away / projects / settings */
+.in-settings .top .step,.in-settings .search{display:none}
+.cols.even{grid-template-columns:1fr 1fr}
+.away-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:8px;border-radius:var(--r-sm)}
+.away-row:hover{background:var(--sunk)}
+.away-row .when{font-family:var(--num);font-variant-numeric:tabular-nums}
+.away-row .tm{font:600 13px var(--num);color:var(--muted)}
+.away-row select,.field select,.field input[type=number],.proj-start input{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:5px 8px;color:var(--ink)}
+.ribbon .s.off{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.5) 0 3px,transparent 3px 7px)}
+.running{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r-md);background:var(--accent-soft);margin-bottom:12px}
+.running b{font:600 15px var(--num)} .running .tm{font:600 15px var(--num);color:var(--accent);margin-left:auto}
+.proj-start{display:flex;gap:8px;margin-bottom:10px} .proj-start input{flex:1;min-width:0}
+.btn{height:32px;padding:0 14px;border:0;border-radius:var(--r-sm);background:var(--ink);color:var(--surface);cursor:pointer;font-weight:600}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--ink);font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chips button{border:1px solid var(--line);background:none;border-radius:20px;padding:3px 11px;font-size:12.5px;cursor:pointer;color:var(--muted)}
+.chips button:hover{border-color:var(--accent);color:var(--accent)}
+.settings{max-width:720px}
+.settings h3{font:600 14px var(--num);margin:22px 0 10px}
+.settings h3:first-child{margin-top:0}
+.field{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.field:last-child{border-bottom:0}
+.field small{display:block;color:var(--faint);font-size:12px}
+.field input[type=number]{width:84px;text-align:right}
+.field textarea{grid-column:1/-1;width:100%;min-height:76px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;font:13px/1.5 var(--text);color:var(--ink);resize:vertical}
+.save-row{display:flex;align-items:center;gap:12px;margin-top:18px}
+.saved{color:var(--prod);font-weight:600}
+@media print{
+  aside,.top .step,.search,.tools,.foot,select,.show-more,.filters,.proj-start,.chips{display:none!important}
+  .shell{display:block} main{padding:0;max-width:none} body{background:#fff}
+  .panel,.hero{break-inside:avoid;border-color:#ddd}
+  .log{max-height:none;overflow:visible}
+}
+@media (max-width:900px){
+  .cols.even{grid-template-columns:1fr}
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .views kbd{display:none}
+  .hero{padding:18px 16px}
+  .span{margin-left:0}
+  .ticks span:nth-child(even){display:none}
+  aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);flex-direction:row;flex-wrap:wrap;align-items:flex-start}
+  .views{flex-direction:row}
+  .minical,.privacy{display:none}
+  main{padding:18px 16px 40px}
+  .cols{grid-template-columns:1fr}
+  .search{width:100%}
+  .big{font-size:42px}
+  .stat{border-left:0;padding:8px 0}
+  .cal{gap:4px} .day{min-height:64px;padding:6px} .day .r{display:none}
+}
 </style>
+<!--ECHARTS-->
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div>
-      <h1>My DeskTime</h1>
-      <div class="sub" id="gen"></div>
+<div class="shell">
+  <aside>
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect width="26" height="26" rx="8" fill="#12a37f"/><circle cx="13" cy="14" r="6.5" fill="none" stroke="#fff" stroke-width="2"/><path d="M13 10.5V14l2.2 1.6M11 5.5h4" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+      DeskTime
     </div>
-    <div class="nav">
-      <button id="prev" title="Pichla din">‹</button>
-      <div class="day" id="dayLabel"></div>
-      <button id="next" title="Agla din">›</button>
+    <nav class="views" id="views" aria-label="View">
+      <button data-v="day">Day <kbd>D</kbd></button>
+      <button data-v="week">Week <kbd>W</kbd></button>
+      <button data-v="month">Month <kbd>M</kbd></button>
+      <button data-v="work">Work <kbd>K</kbd></button>
+      <button data-v="agenda">Agenda <kbd>A</kbd></button>
+      <button data-v="settings">Settings <kbd>,</kbd></button>
+    </nav>
+    <div class="minical">
+      <div class="mini-head"><button id="mPrev" aria-label="Previous month">‹</button><span id="mLabel"></span><button id="mNext" aria-label="Next month">›</button></div>
+      <div class="mini" id="mini"></div>
     </div>
-  </header>
+    <div class="theme" id="theme" role="radiogroup" aria-label="Theme">
+      <button data-theme="auto" role="radio">Auto</button><button data-theme="light" role="radio">Light</button><button data-theme="dark" role="radio">Dark</button>
+    </div>
+    <div class="privacy">
+      <b><svg class="lock" width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M4 7V5a4 4 0 0 1 8 0v2h.5A1.5 1.5 0 0 1 14 8.5v5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5v-5A1.5 1.5 0 0 1 3.5 7H4Zm2 0h4V5a2 2 0 1 0-4 0v2Z"/></svg>Privacy on</b>
+      Passwords, email, login and payment pages are saved by name only. What’s on them is never read. Your data stays on this Mac — only Google Tasks sync talks to Google, if you connect it.
+    </div>
+  </aside>
 
-  <div id="main"></div>
+  <main>
+    <div class="top">
+      <div class="title"><h1 id="label"></h1><p id="sublabel"></p></div>
+      <div class="spacer"></div>
+      <div class="step">
+        <button class="icon-btn" id="prev" aria-label="Previous">‹</button>
+        <button class="text-btn" id="today">Today</button>
+        <button class="icon-btn" id="next" aria-label="Next">›</button>
+      </div>
+      <div class="step tools">
+        <button class="icon-btn" id="csv" title="Export CSV" aria-label="Export CSV"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m0 0-3-3m3 3 3-3M3 12.5h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="icon-btn" id="print" title="Print or save as PDF" aria-label="Print or save as PDF"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 6V2.5h7V6M4.5 11.5h-2v-5h11v5h-2M4.5 9.5h7v4h-7z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></button>
+      </div>
+      <label class="search"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m11 11 3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <input id="q" type="search" placeholder="Search apps, sites, titles" aria-label="Search"></label>
+    </div>
+    <div id="main"></div>
+    <div class="foot" id="foot"></div>
+  </main>
 </div>
 <div class="tip" id="tip"></div>
 
 <script>
 const DATA = /*__DATA__*/null;
-const CATS = DATA.categories;
-const dayKeys = Object.keys(DATA.days).sort();
+// App ke andar data Swift se aata hai; report.py wale static page me sab DATA.days me hota hai.
+const bridge = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.dt;
+const hasCharts = typeof echarts !== 'undefined';
+let RULES = DATA.rules;
+let cache = Object.assign({}, DATA.days);
+let summary = {};
+const PRIVATE = '🔒 Private';
+
 const $ = s => document.querySelector(s);
-const color = c => (CATS[c] || CATS.Other).color;
-const esc = s => String(s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2,'0');
+const keyOf = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parse = k => new Date(k+'T00:00:00');
+const addDays = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const todayKey = () => keyOf(new Date());
+const safeUrl = u => /^https?:\/\//i.test(u) ? u : '';
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const LOCK = '<svg class="lock" width="12" height="12" viewBox="0 0 16 16" aria-label="Private"><path fill="currentColor" d="M4 7V5a4 4 0 0 1 8 0v2h.5A1.5 1.5 0 0 1 14 8.5v5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5v-5A1.5 1.5 0 0 1 3.5 7H4Zm2 0h4V5a2 2 0 1 0-4 0v2Z"/></svg>';
 
 function fmt(sec){
   sec = Math.round(sec);
   const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60);
-  if (h) return `${h}h ${String(m).padStart(2,'0')}m`;
+  if (h) return `${h}h ${pad(m)}m`;
   if (m) return `${m}m`;
   return `${sec}s`;
 }
 function clock(sec){
-  const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60);
-  const ap = h >= 12 ? 'PM' : 'AM', hh = (h % 12) || 12;
-  return `${hh}:${String(m).padStart(2,'0')} ${ap}`;
+  const h = Math.floor(sec/3600)%24, m = Math.floor(sec%3600/60);
+  return `${(h%12)||12}:${pad(m)} ${h>=12?'PM':'AM'}`;
 }
-function hourLbl(h){ const ap = h>=12?'p':'a'; return ((h%12)||12)+ap; }
-function todayKey(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function niceDate(k){
-  const d = new Date(k+'T00:00:00');
-  const label = d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
-  if (k === todayKey()) return 'Today · ' + label;
-  return label;
+const hourLbl = h => ((h%12)||12)+(h>=12?' pm':' am');
+const pct = (a,b) => b ? Math.round(a/b*100) : 0;
+const add = (m,k,v) => { m[k] = (m[k]||0) + v; };
+const sorted = m => Object.entries(m).sort((a,b) => b[1]-a[1]);
+
+// ---------- categories ----------
+let memo = new Map();
+const byLen = o => Object.keys(o||{}).sort((a,b) => b.length-a.length);
+function categorize(app, domain){
+  const k = app+'\0'+domain;
+  if (memo.has(k)) return memo.get(k);
+  let c = null;
+  if (domain){
+    const ks = byLen(RULES.domains);   // lambi key pehle
+    for (const key of ks) if (domain === key || domain.endsWith('.'+key)) { c = RULES.domains[key]; break; }
+    if (!c) for (const key of ks) if (domain.includes(key)) { c = RULES.domains[key]; break; }
+  }
+  if (!c && app){
+    const name = app.toLowerCase(), apps = RULES.apps || {};
+    if (apps[name]) c = apps[name];
+    else for (const key of byLen(apps)) if (key.length >= 5 && name.includes(key)) { c = apps[key]; break; }
+  }
+  c = c && RULES.categories[c] ? c : 'Other';
+  memo.set(k, c);
+  return c;
 }
-function sum(map, k, v){ map[k] = (map[k]||0) + v; }
-function sorted(map){ return Object.entries(map).sort((a,b)=>b[1]-a[1]); }
-function where(r){ return r[4] || r[2]; }   // website ho to domain, warna app
+const dark = matchMedia('(prefers-color-scheme: dark)');
+const isDark = () => { const t = document.documentElement.dataset.theme; return t === 'dark' || (t !== 'light' && dark.matches); };
+// Theme: ?theme=light|dark|auto link se, warna pichli pasand (localStorage), warna Auto
+function setTheme(t, save){
+  if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; else { delete document.documentElement.dataset.theme; t = 'auto'; }
+  document.querySelectorAll('#theme button').forEach(b => { b.classList.toggle('on', b.dataset.theme === t); b.setAttribute('aria-checked', b.dataset.theme === t); });
+  if (save) try { localStorage.setItem('dt-theme', t); } catch (e) {}
+}
+setTheme(new URLSearchParams(location.search).get('theme') || (() => { try { return localStorage.getItem('dt-theme'); } catch (e) { return null; } })() || 'auto', false);
+const color = c => { const k = RULES.categories[c] || RULES.categories.Other || {color:'#8a93a3'}; return (isDark() && k.dark) || k.color; };
+// categories hamesha ek hi order me (slot) — rang entity ke saath chalta hai, size ke saath nahi
+const catOrder = () => Object.keys(RULES.categories).sort((a,b) => (RULES.categories[a].slot||99) - (RULES.categories[b].slot||99));
+const prodOf = c => { const p = (RULES.categories[c]||{}).productive; return p === true ? true : p === false ? false : null; };
+const pcol = p => p === true ? css('--prod') : p === false ? css('--unprod') : css('--neutral');
+const goal = () => (RULES.goal_hours || 8) * 3600;
 
-let current = dayKeys.includes(todayKey()) ? todayKey() : dayKeys[dayKeys.length-1];
-let openApp = null;
+// ---------- state ----------
+const state = {view:'day', date:todayKey(), q:'', tab:'apps', filter:'all', open:{}, more:{}, mini:null};
+const START = /*__START__*/'';   // app notification se khule to seedha Agenda
+(m => { if (m){ state.view = m[1]; state.date = m[2] > todayKey() && m[1] !== 'agenda' ? todayKey() : m[2]; } })((START || location.hash).match(/^#(day|week|month|work|agenda|settings)\/(\d{4}-\d{2}-\d{2})$/));
+window.goView = v => { state.view = v; state.date = todayKey(); render(); };
 
-function render(){
-  $('#gen').textContent = 'Last updated: ' + DATA.generated + ' · report.py dobara chalao naya data dekhne ke liye';
-  if (!current){
-    $('#dayLabel').textContent = '—';
-    $('#prev').disabled = $('#next').disabled = true;
-    $('#main').innerHTML = `<div class="card empty">Abhi koi data nahi hai.<br>Pehle <b>tracker.py</b> chalao, thoda kaam karo, fir <b>report.py</b> chalao.</div>`;
+function range(){
+  const d = parse(state.date);
+  if (state.view === 'day' || state.view === 'agenda' || state.view === 'work') return [d, d];
+  if (state.view === 'week'){ const s = addDays(d, -((d.getDay()+6)%7)); return [s, addDays(s,6)]; }   // Mon–Sun
+  return [new Date(d.getFullYear(), d.getMonth(), 1), new Date(d.getFullYear(), d.getMonth()+1, 0)];
+}
+const keysIn = (a,b) => { const o = []; for (let d = new Date(a); d <= b; d = addDays(d,1)) o.push(keyOf(d)); return o; };
+
+async function load(keys){
+  const miss = keys.filter(k => !(k in cache) && k <= todayKey());
+  if (miss.length && bridge){
+    Object.assign(cache, JSON.parse(await bridge.postMessage({type:'days', from:miss[0], to:miss[miss.length-1]})));
+  }
+  keys.forEach(k => { if (!(k in cache)) cache[k] = []; });
+}
+async function loadSummary(a, b){
+  if (bridge) Object.assign(summary, JSON.parse(await bridge.postMessage({type:'summary', from:keyOf(a), to:keyOf(b)})));
+  else for (const k of keysIn(a,b)) summary[k] = (cache[k]||[]).reduce((s,r) => s + r[1]-r[0], 0);
+}
+
+// Away periods + projects (app me Swift se, report.py me DATA.extras se)
+let extras = {};
+async function loadExtras(a, b){
+  const k = keyOf(a)+'|'+keyOf(b);
+  if (extras[k]) return extras[k];
+  if (bridge) extras[k] = JSON.parse(await bridge.postMessage({type:'extras', from:keyOf(a), to:keyOf(b)}));
+  else {
+    const lo = a.getTime()/1000, hi = addDays(b,1).getTime()/1000, E = DATA.extras || {};
+    extras[k] = {away:(E.away||[]).filter(x => x[2] >= lo && x[1] < hi), projects:(E.projects||[]).filter(x => x[2] >= lo && x[1] < hi), recent:E.recent||[], running:E.running||null};
+  }
+  return extras[k];
+}
+const OFFLINE_WORK = ['Meeting', 'Call', 'Offline work'];   // ye away time kaam me gina jaata hai
+const AWAY_LABELS = ['Meeting', 'Call', 'Offline work', 'Lunch', 'Break', 'Personal'];
+const sod = t => { const d = new Date(t*1000); return d.getHours()*3600 + d.getMinutes()*60 + d.getSeconds(); };
+// absolute [start,end] ko din ke hisson me baanto: [{day, s, e}]
+function splitDays(st, en){
+  const out = [];
+  while (st < en){
+    const d0 = new Date(st*1000); d0.setHours(0,0,0,0);
+    const next = addDays(d0,1).getTime()/1000, e = Math.min(en, next), base = d0.getTime()/1000;
+    out.push({day:keyOf(d0), s:st-base, e:e-base});
+    st = e;
+  }
+  return out;
+}
+function offlineRows(E, keys){
+  const q = state.q.trim().toLowerCase(), out = [];
+  for (const [, st, en, label] of E.away){
+    if (!OFFLINE_WORK.includes(label)) continue;
+    if (q && !('offline '+label).toLowerCase().includes(q)) continue;
+    for (const p of splitDays(st, en)) if (keys.includes(p.day))
+      out.push({day:p.day, s:p.s, e:p.e, d:p.e-p.s, app:'Offline', title:label, domain:'', url:'', cat:'Work', prod:prodOf('Work'), priv:false, offline:true});
+  }
+  return out;
+}
+
+function rowsFor(keys){
+  const q = state.q.trim().toLowerCase(), out = [];
+  for (const day of keys) for (const [s,e,app,title,domain,url] of (cache[day]||[])){
+    if (q && !(app+' '+title+' '+domain+' '+url).toLowerCase().includes(q)) continue;
+    const cat = categorize(app, domain||'');
+    out.push({day, s, e, d:e-s, app, title:title||'', domain:domain||'', url:url||'', cat, prod:prodOf(cat), priv:title === PRIVATE});
+  }
+  return out;
+}
+
+function aggregate(rows){
+  const A = {total:0, prod:0, unprod:0, neutral:0, byCat:{}, byApp:{}, bySite:{}, appParts:{}, sitePages:{}, sitePriv:{}, byDay:{}, appMix:{}};
+  for (const r of rows){
+    A.total += r.d;
+    if (r.prod === true) A.prod += r.d; else if (r.prod === false) A.unprod += r.d; else A.neutral += r.d;
+    add(A.byCat, r.cat, r.d); add(A.byApp, r.app, r.d);
+    add(A.appParts[r.app] = A.appParts[r.app] || {}, r.domain || (r.priv ? PRIVATE : r.title || '(no title)'), r.d);
+    if (r.domain){
+      add(A.appMix[r.app] = A.appMix[r.app] || {}, r.cat, r.d);   // browser: sites ki category ka mix
+      add(A.bySite, r.domain, r.d);
+      if (r.priv) add(A.sitePriv, r.domain, r.d);
+      else {
+        const pages = A.sitePages[r.domain] = A.sitePages[r.domain] || {};
+        const p = pages[r.url || r.domain] = pages[r.url || r.domain] || {d:0, title:r.title};
+        p.d += r.d;
+      }
+    }
+    const D = A.byDay[r.day] = A.byDay[r.day] || {total:0, prod:0, unprod:0, byCat:{}, first:Infinity, last:0};
+    D.total += r.d; if (r.prod === true) D.prod += r.d; else if (r.prod === false) D.unprod += r.d;
+    add(D.byCat, r.cat, r.d); D.first = Math.min(D.first, r.s); D.last = Math.max(D.last, r.e);
+  }
+  return A;
+}
+
+// Browser jaisi apps ka rang uski sites se aata hai (sabse zyada time wali category)
+const appCat = (A, app) => app === 'Offline' ? 'Work' : A.appMix[app] ? sorted(A.appMix[app])[0][0] : categorize(app, '');
+
+// ---------- render ----------
+let charts = [];
+async function render(){
+  document.querySelectorAll('#views button').forEach(x => x.classList.toggle('on', x.dataset.v === state.view));
+  document.body.classList.toggle('in-settings', state.view === 'settings');
+  if (state.view === 'settings') return renderSettings();
+  if (state.view === 'agenda') return renderAgenda();
+  if (state.view === 'work') return renderWork();
+  const [a, b] = range(), keys = keysIn(a, b);
+  $('#next').disabled = keyOf(b) >= todayKey();
+  setTitle(a, b);
+  history.replaceState(null, '', `#${state.view}/${state.date}`);
+  const [, , E] = await Promise.all([load(keys), renderMini(), loadExtras(a, b)]);
+  const rows = rowsFor(keys).concat(offlineRows(E, keys)).sort((x,y) => x.day < y.day ? -1 : x.day > y.day ? 1 : x.s - y.s);
+  const A = aggregate(rows);
+  current = {rows, keys};
+  // breaks (away jo kaam me nahi gina) — ribbon / log me dikhane ke liye
+  const breaks = [];
+  for (const [, st, en, label] of E.away) if (!OFFLINE_WORK.includes(label))
+    for (const p of splitDays(st, en)) if (keys.includes(p.day)) breaks.push({day:p.day, s:p.s, e:p.e, d:p.e-p.s, label:label || 'Break'});
+  live = bridge && keys.includes(todayKey()) ? JSON.parse(await bridge.postMessage({type:'status'})) : null;
+  charts.forEach(c => c.dispose()); charts = [];
+  $('#foot').textContent = bridge ? 'Updates every minute' : 'Generated ' + DATA.generated + '. Run report.py again for fresh data.';
+
+  if (!rows.length){
+    $('#main').innerHTML = (E.running || E.projects.length ? `<div class="stack" style="margin-bottom:16px">${projectsPanel(E, a, b)}</div>` : '') + `<div class="panel empty-state"><h3>${state.q ? 'No matches' : 'No activity yet'}</h3>
+      ${state.q ? `Nothing matches “${esc(state.q)}”. Clear the search to see everything.`
+                : 'DeskTime records your work automatically. Check back after some time at the computer.'}</div>`;
     return;
   }
-  const i = dayKeys.indexOf(current);
-  $('#prev').disabled = i <= 0;
-  $('#next').disabled = i >= dayKeys.length-1;
-  $('#dayLabel').textContent = niceDate(current);
+  const html = [];
+  if (state.view === 'day') html.push(dayHero(rows, A, breaks));
+  else if (state.view === 'week') html.push(rangeHero(A, keys, 'week'));
+  else html.push(rangeHero(A, keys, 'month'));
+  html.push(`<div class="cols">${listsPanel(A)}<div class="stack">${catPanel()}${state.view === 'day' ? hoursPanel() : ''}</div></div>`);
+  const aw = awayPanel(E);
+  html.push(aw ? `<div class="cols even">${projectsPanel(E, a, b)}${aw}</div>` : projectsPanel(E, a, b));
+  if (state.view === 'day') html.push(logPanel(rows, breaks));
+  $('#main').innerHTML = `<div class="stack">${html.join('')}</div>`;
+  drawCharts(rows, A, keys);
+  bindRibbon(rows);
+}
 
-  const rows = DATA.days[current];
-  const byCat = {}, byApp = {}, bySite = {}, appTitles = {}, hours = Array.from({length:24},()=>({}));
-  let total = 0, prod = 0, unprod = 0;
-  for (const r of rows){
-    const [s,e,app,title,domain,cat] = r, d = e - s;
-    total += d;
-    sum(byCat, cat, d); sum(byApp, app, d);
-    if (domain) sum(bySite, domain, d);
-    appTitles[app] = appTitles[app] || {}; sum(appTitles[app], domain || title || '(no title)', d);
-    const p = (CATS[cat]||{}).productive;
-    if (p === true) prod += d; else if (p === false) unprod += d;
-    // ghante ke hisaab se baanto
-    let t = s;
-    while (t < e){
-      const h = Math.floor(t/3600), end = Math.min(e, (h+1)*3600);
-      sum(hours[Math.min(h,23)], cat, end - t); t = end;
-    }
+function setTitle(a, b){
+  let t, s = '';
+  if (state.view === 'day'){
+    t = keyOf(a) === todayKey() ? 'Today' : keyOf(a) === keyOf(addDays(new Date(),-1)) ? 'Yesterday' : a.toLocaleDateString('en-IN',{weekday:'long'});
+    s = a.toLocaleDateString('en-IN', t === 'Today' || t === 'Yesterday' ? {weekday:'long', day:'numeric', month:'long', year:'numeric'} : {day:'numeric', month:'long', year:'numeric'});
+  } else if (state.view === 'week'){
+    t = 'Week';
+    s = a.toLocaleDateString('en-IN',{day:'numeric', month:'short'}) + ' – ' + b.toLocaleDateString('en-IN',{day:'numeric', month:'short', year:'numeric'});
+  } else {
+    t = a.toLocaleDateString('en-IN',{month:'long', year:'numeric'});
+    s = 'Monthly overview';
   }
-  const first = rows[0][0], last = rows[rows.length-1][1];
-  const topApp = sorted(byApp)[0];
-  const appCat = {}; rows.forEach(r => { const a = r[2]; appCat[a] = (appCat[a] === undefined || appCat[a] === r[5]) ? r[5] : 'Other'; });  // browser jaise mixed apps = Other
-  const siteCat = {}; rows.forEach(r => { if (r[4]) siteCat[r[4]] = siteCat[r[4]] || r[5]; });
+  $('#label').textContent = t; $('#sublabel').textContent = s;
+}
 
-  // timeline range: pehli activity ke ghante se aakhri tak
-  const h0 = Math.floor(first/3600), h1 = Math.min(24, Math.ceil(last/3600));
-  const span = Math.max(1,(h1-h0))*3600, off = h0*3600;
-  const segs = rows.map((r,idx) => `<div class="seg" data-i="${idx}" style="left:${(r[0]-off)/span*100}%;width:${(r[1]-r[0])/span*100}%;background:${color(r[5])}"></div>`).join('');
-  const step = (h1-h0) > 12 ? 2 : 1;
-  let ticks = '';
-  for (let h=h0; h<=h1; h+=step) ticks += `<span style="left:${(h*3600-off)/span*100}%">${hourLbl(h%24)}</span>`;
+function stat(v, k, sub='', style=''){ return `<div class="stat"><div class="v" style="${style}">${v}</div><div class="k">${k}${sub ? `<small>${sub}</small>` : ''}</div></div>`; }
+function prodMeter(A){
+  const w = v => (v/A.total*100)+'%';
+  return `<div class="meter"><i style="width:${w(A.prod)};background:var(--prod)"></i><i style="width:${w(A.neutral)};background:var(--neutral)"></i><i style="width:${w(A.unprod)};background:var(--unprod)"></i></div>`;
+}
 
-  const catOrder = sorted(byCat);
-  const stack = catOrder.map(([c,v]) => `<div title="${esc(c)} ${fmt(v)}" style="width:${v/total*100}%;background:${color(c)}"></div>`).join('');
-  const catRows = catOrder.map(([c,v]) => row(c, v, total, color(c), `${Math.round(v/total*100)}%`)).join('');
+let live = null;   // app se: {state:'active'|'break'|'paused', since}
+function dayHero(rows, A, breaks){
+  const D = Object.values(A.byDay)[0];
+  const isToday = state.date === todayKey(), nowSec = sod(Date.now()/1000);
+  const st = isToday && live ? live.state : (isToday && nowSec - D.last < 300 ? 'active' : 'done');
+  // abhi break chal raha hai to ribbon me "abhi tak" ka break bhi dikhao
+  const allBreaks = st === 'break' && live.since ? breaks.concat([{s:sod(live.since), e:nowSec, d:nowSec - sod(live.since), label:'Break (now)'}]) : breaks;
+  const lastEnd = Math.max(D.last, ...allBreaks.map(b => b.e));
+  const h0 = Math.floor(D.first/3600), h1 = Math.min(24, Math.ceil(lastEnd/3600));
+  const off = h0*3600, span = Math.max(1, h1-h0)*3600;
+  const pos = r => `left:${(r.s-off)/span*100}%;width:${r.d/span*100}%`;
+  const step = h1-h0 > 12 ? 2 : 1;
+  let ticks = ''; for (let h = h0; h <= h1; h += step) ticks += `<span style="left:${(h*3600-off)/span*100}%">${hourLbl(h%24)}</span>`;
+  const used = new Set(rows.map(r => r.cat));
+  return `<section class="hero" aria-label="Day summary">
+    <div class="hero-top">
+      <div><div class="big">${fmt(A.total)}</div><div class="big-label">desk time</div></div>
+      <div class="span"><div><strong>${clock(D.first)}</strong><div class="faint" style="font-size:12px">arrived</div></div>
+        <div class="line"></div>
+        <div>${st === 'active' ? '<span class="live"><i></i>Online now</span>'
+             : st === 'break' ? `<span class="onbreak">☕ On a break</span>`
+             : st === 'paused' ? '<strong>Paused</strong>' : `<strong>${clock(D.last)}</strong>`}
+          <div class="faint" style="font-size:12px">${st === 'active' ? 'still working' : st === 'break' ? 'for ' + fmt(nowSec - sod(live.since)) : st === 'paused' ? 'tracking is paused' : 'left'}</div></div></div>
+    </div>
+    <div class="ribbon" id="ribbon" data-breaks='${esc(JSON.stringify(allBreaks))}'>
+      <div class="lane">${rows.map((r,i) => `<div class="s${r.offline ? ' off' : ''}" data-i="${i}" style="${pos(r)};background:${color(r.cat)}"></div>`).join('')}${
+        allBreaks.map((b,i) => `<div class="s brk" data-b="${i}" style="${pos(b)}"></div>`).join('')}</div>
+      <div class="lane thin">${rows.map((r,i) => `<div class="s" data-i="${i}" style="${pos(r)};background:${pcol(r.prod)}"></div>`).join('')}</div>
+      <div class="ticks">${ticks}</div>
+      <div class="legend">${catOrder().filter(c => used.has(c)).map(c => `<span><i class="sw" style="background:${color(c)}"></i>${esc(c)}</span>`).join('')}
+        ${allBreaks.length ? '<span><i class="sw" style="background:var(--brk)"></i>Break</span>' : ''}
+        <span class="faint">thin line: <i class="sw" style="background:var(--prod);margin-left:4px"></i>productive <i class="sw" style="background:var(--unprod);margin-left:6px"></i>unproductive</span></div>
+    </div>
+    <div class="stats">
+      ${stat(fmt(A.prod), 'Productive', fmt(A.unprod)+' unproductive', 'color:var(--prod)')}
+      ${stat(pct(A.prod,A.total)+'%', 'Productivity', 'share of desk time')}
+      ${stat(pct(A.prod,goal())+'%', 'Effectiveness', `goal ${fmt(goal())} a day`)}
+      ${stat(fmt(Math.max(0, D.last-D.first-A.total)), 'Breaks', allBreaks.length ? `${allBreaks.length} long ${allBreaks.length === 1 ? 'break' : 'breaks'}` : 'away between sessions')}
+    </div>
+    ${prodMeter(A)}
+  </section>`;
+}
 
-  const maxApp = topApp[1];
-  const appRows = sorted(byApp).slice(0,15).map(([a,v]) => {
-    let html = row(a, v, maxApp, color(appCat[a]), '', `click" data-app="${esc(a)}`);
-    if (openApp === a){
-      const det = sorted(appTitles[a]).slice(0,12).map(([t,tv]) => `<div><span>${esc(t)}</span><span>${fmt(tv)}</span></div>`).join('');
-      html = html.replace(/<\/div>$/, '') + `<div class="detail">${det}</div></div>`;
-    }
-    return html;
+function rangeHero(A, keys, kind){
+  const days = Object.entries(A.byDay), n = days.length;
+  const best = [...days].sort((x,y) => y[1].prod-x[1].prod)[0];
+  const avg = f => n ? days.reduce((s,[,D]) => s + D[f], 0)/n : 0;
+  const top = `<div class="hero-top">
+      <div><div class="big">${fmt(A.total)}</div><div class="big-label">${n} ${n === 1 ? 'day' : 'days'} worked, ${fmt(n ? A.total/n : 0)} a day on average</div></div>
+      <div class="span"><div><strong>${clock(avg('first'))}</strong><div class="faint" style="font-size:12px">avg. arrival</div></div>
+        <div class="line"></div><div><strong>${clock(avg('last'))}</strong><div class="faint" style="font-size:12px">avg. left</div></div></div>
+    </div>`;
+  const body = kind === 'week' ? `<div class="chart tall" id="daysChart" style="margin-top:14px"></div>` : calendar(A, keys);
+  return `<section class="hero">${top}${body}
+    <div class="stats">
+      ${stat(fmt(A.prod), 'Productive', fmt(A.unprod)+' unproductive', 'color:var(--prod)')}
+      ${stat(pct(A.prod,A.total)+'%', 'Productivity', 'share of desk time')}
+      ${stat(pct(A.prod,goal()*n)+'%', 'Effectiveness', `goal ${fmt(goal())} a day`)}
+      ${stat(best ? parse(best[0]).toLocaleDateString('en-IN',{day:'numeric', month:'short'}) : '—', 'Best day', best ? fmt(best[1].prod)+' productive' : '')}
+    </div>${prodMeter(A)}</section>`;
+}
+
+function calendar(A, keys){
+  const first = parse(keys[0]), max = Math.max(3600, ...Object.values(A.byDay).map(D => D.total));
+  let h = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="w">${d}</div>`).join('');
+  for (let i = 0; i < (first.getDay()+6)%7; i++) h += '<div></div>';
+  for (const k of keys){
+    const D = A.byDay[k], future = k > todayKey(), today = k === todayKey();
+    if (!D){ h += `<div class="day empty ${future?'future':''} ${today?'today':''}"><div class="n">${parse(k).getDate()}</div></div>`; continue; }
+    const tint = Math.round(6 + D.total/max*22);
+    h += `<button class="day ${today?'today':''}" data-day="${k}" style="background:color-mix(in srgb,var(--prod) ${tint}%,var(--sunk));text-align:left;font:inherit;color:inherit"
+        title="${fmt(D.total)} desk time, ${pct(D.prod,D.total)}% productive">
+      <div class="n">${parse(k).getDate()}</div><div class="h">${fmt(D.total)}</div>
+      <div class="r">${clock(D.first)} – ${clock(D.last)}</div>
+      <div class="meter"><i style="width:${pct(D.prod,D.total)}%;background:var(--prod)"></i></div></button>`;
+  }
+  return `<div class="cal" style="margin-top:18px">${h}</div>`;
+}
+
+const FILTERS = [['all','All'],['prod','Productive'],['unprod','Unproductive'],['neutral','Neutral']];
+const passes = (f, c) => { const p = prodOf(c); return f === 'all' || (f === 'prod' && p === true) || (f === 'unprod' && p === false) || (f === 'neutral' && p === null); };
+function catSelect(kind, key, cat){
+  if (!bridge) return '';
+  return `<select data-kind="${kind}" data-key="${esc(key)}" aria-label="Category for ${esc(key)}">${catOrder().map(c => `<option ${c===cat?'selected':''}>${esc(c)}</option>`).join('')}</select>`;
+}
+
+function listsPanel(A){
+  const isApps = state.tab === 'apps';
+  const src = isApps ? A.byApp : A.bySite;
+  const catFor = k => isApps ? appCat(A, k) : categorize('',k);
+  const all = sorted(src).filter(([k]) => passes(state.filter, catFor(k)));
+  const items = state.more[state.tab] ? all : all.slice(0, 12);
+  const max = items.length ? items[0][1] : 1;
+  const body = items.map(([k,v]) => {
+    const cat = catFor(k), id = state.tab+':'+k, open = state.open[id];
+    return `<div class="item ${open?'open':''}" data-open="${esc(id)}" role="button" tabindex="0" aria-expanded="${!!open}">
+      <div class="nm"><i class="dot" style="background:${color(cat)}"></i><span title="${esc(k)}">${esc(k)}</span></div>
+      <div class="meta">${isApps && A.appMix[k] ? '<span title="Category comes from the sites you visit">by site</span>' : k === 'Offline' ? '' : catSelect(isApps?'app':'domain', k, cat)}<span class="tm">${fmt(v)}</span></div>
+      <div class="bar"><i style="width:${v/max*100}%;background:${color(cat)}"></i></div>
+      ${open ? (isApps ? appDetail(A, k) : siteDetail(A, k)) : ''}</div>`;
   }).join('');
-  const sites = sorted(bySite).slice(0,15);
-  const siteRows = sites.length ? sites.map(([s,v]) => row(s, v, sites[0][1], color(siteCat[s]))).join('')
-                                : `<div class="sub">Browser (Chrome / Safari / Brave / Edge / Arc) ki website yahan dikhegi.</div>`;
+  const emptyMsg = isApps ? 'No apps match this filter.' : (Object.keys(A.bySite).length ? 'No sites match this filter.' : 'Sites you open in Chrome, Safari, Brave, Edge or Arc show up here.');
+  return `<section class="panel">
+    <h2><span class="tabs" role="tablist"><button data-tab="apps" class="${isApps?'on':''}">Apps</button><button data-tab="sites" class="${!isApps?'on':''}">Websites</button></span>
+      <span class="hint">${isApps ? 'Click an app to see where the time went' : 'Click a site to see its pages'}</span></h2>
+    <div class="filters">${FILTERS.map(([k,l]) => `<button data-filter="${k}" class="${state.filter===k?'on':''}">${l}</button>`).join('')}</div>
+    ${body || `<div class="muted" style="padding:10px 8px">${emptyMsg}</div>`}
+    ${all.length > 12 ? `<button class="show-more" data-more="${state.tab}">${state.more[state.tab] ? 'Show less' : `Show all ${all.length}`}</button>` : ''}
+  </section>`;
+}
+function appDetail(A, app){
+  return `<div class="detail">${sorted(A.appParts[app]).slice(0, 25).map(([t,v]) =>
+    `<div class="d"><span class="ttl" title="${esc(t)}">${t === PRIVATE ? `<span class="private-note">${LOCK} Private — content not read</span>` : esc(t)}</span><span class="t">${fmt(v)}</span></div>`).join('')}</div>`;
+}
+function siteDetail(A, site){
+  const pages = Object.entries(A.sitePages[site] || {}).sort((x,y) => y[1].d-x[1].d).slice(0, 30);
+  const priv = A.sitePriv[site];
+  return `<div class="detail">${pages.map(([u,p]) => {
+      const href = safeUrl(u);
+      return `<div class="d"><span><span class="ttl">${href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(p.title || u)}</a>` : esc(p.title || u)}</span>
+        <span class="url" title="${esc(u)}">${esc(u)}</span></span><span class="t">${fmt(p.d)}</span></div>`;
+    }).join('')}
+    ${priv ? `<div class="d"><span class="private-note">${LOCK} Private pages (login, email, payment) — time counted, content not read</span><span class="t">${fmt(priv)}</span></div>` : ''}</div>`;
+}
 
-  const maxHour = 3600;
-  const hourCols = hours.map((hm,h) => {
-    const parts = sorted(hm).map(([c,v]) => `<div title="${hourLbl(h)} · ${esc(c)} ${fmt(v)}" style="height:${v/maxHour*100}%;background:${color(c)}"></div>`).join('');
-    return `<div class="hcol">${parts}</div>`;
-  }).join('');
-  const hourLabels = hours.map((_,h) => `<div>${h%3===0?hourLbl(h):''}</div>`).join('');
+const catPanel = () => `<section class="panel"><h2>Category</h2><div class="chart" id="catChart"></div></section>`;
+const hoursPanel = () => `<section class="panel"><h2>By hour</h2><div class="chart" id="hourChart" style="height:200px"></div></section>`;
 
-  // week: current din tak ke last 7 din
-  const cd = new Date(current+'T00:00:00'), week = [];
-  for (let k=6;k>=0;k--){
-    const d = new Date(cd); d.setDate(cd.getDate()-k);
-    const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    const wc = {}; let wt = 0;
-    (DATA.days[key]||[]).forEach(r => { sum(wc, r[5], r[1]-r[0]); wt += r[1]-r[0]; });
-    week.push({key, d, wc, wt});
-  }
-  const wmax = Math.max(3600, ...week.map(w=>w.wt));
-  const weekCols = week.map(w => `<div class="wd ${w.key===current?'sel':''}" data-day="${w.key}">
-      <div class="val">${w.wt?fmt(w.wt):''}</div>
-      <div class="col" style="height:${w.wt/wmax*100}%">${sorted(w.wc).map(([c,v])=>`<div style="height:${v/w.wt*100}%;background:${color(c)}"></div>`).join('')}</div>
-      <div class="lbl">${w.d.toLocaleDateString('en-IN',{weekday:'short'})} ${w.d.getDate()}</div></div>`).join('');
-
-  // log: lagatar same app/site ko ek session maano, 1 min se chhote hata do
-  const sessions = [];
+function logPanel(rows, breaks = []){
+  const ss = [];
   for (const r of rows){
-    const lastS = sessions[sessions.length-1], w = where(r);
-    if (lastS && lastS.w === w && r[0] - lastS.e < 120){ lastS.e = r[1]; lastS.d += r[1]-r[0]; }
-    else sessions.push({s:r[0], e:r[1], d:r[1]-r[0], w, cat:r[5], title:r[3]});
+    const L = ss[ss.length-1], w = r.domain || r.app;
+    if (L && L.w === w && L.title === r.title && r.s - L.e < 120){ L.e = r.e; L.d += r.d; }
+    else ss.push({s:r.s, e:r.e, d:r.d, w, app:r.app, cat:r.cat, title:r.title, url:r.url, priv:r.priv});
   }
-  const logRows = sessions.filter(x => x.d >= 60).reverse().map(x =>
-    `<div class="row"><div class="when">${clock(x.s)}</div><div class="dot" style="background:${color(x.cat)}"></div>
-     <div class="name" title="${esc(x.title)}">${esc(x.w)} <span class="sub">${esc(x.title && x.title!==x.w ? '— '+x.title : '')}</span></div><div class="t">${fmt(x.d)}</div></div>`).join('');
+  for (const b of breaks) ss.push({s:b.s, e:b.e, d:b.d, brk:true, label:b.label});
+  const list = ss.filter(x => x.d >= 30).sort((x,y) => y.s - x.s);
+  const shown = state.more.log ? list : list.slice(0, 60);
+  return `<section class="panel"><h2>Activity log <span class="hint">Newest first, ${list.length} entries</span></h2>
+    <div class="log">${shown.map(x => {
+      if (x.brk) return `<div class="row brk"><span class="when">${clock(x.s)}</span><i class="dot" style="background:var(--brk)"></i>
+        <span class="what">☕ <b>${esc(x.label)}</b> <span class="app">${clock(x.s)} – ${clock(x.e)}</span></span><span class="tm">${fmt(x.d)}</span></div>`;
+      const href = safeUrl(x.url), t = x.title && x.title !== x.w ? x.title : '';
+      const what = x.priv ? `<span class="private-note" style="display:inline-flex">${LOCK} Private</span>`
+                 : t ? (href ? `<a href="${esc(href)}" target="_blank" rel="noopener" title="${esc(x.url)}">${esc(t)}</a>` : esc(t)) : '';
+      return `<div class="row"><span class="when">${clock(x.s)}</span><i class="dot" style="background:${color(x.cat)}"></i>
+        <span class="what"><b>${esc(x.w)}</b>${x.w !== x.app ? `<span class="app">${esc(x.app)}</span>` : ''}${what ? ' &nbsp;' + what : ''}</span>
+        <span class="tm">${fmt(x.d)}</span></div>`;
+    }).join('') || '<div class="muted" style="padding:8px">No activity longer than 30 seconds.</div>'}</div>
+    ${list.length > 60 ? `<button class="show-more" data-more="log">${state.more.log ? 'Show less' : 'Show full log'}</button>` : ''}</section>`;
+}
 
-  const legend = Object.keys(CATS).filter(c => byCat[c]).map(c => `<span><i class="dot" style="background:${color(c)}"></i>${esc(c)}</span>`).join('');
-  const prodPct = total ? Math.round(prod/total*100) : 0;
+// ---------- away + projects ----------
+function awayPanel(E){
+  if (!E.away.length) return '';
+  const list = [...E.away].reverse();
+  return `<section class="panel"><h2>Away from computer <span class="hint">Meeting, Call and Offline work count as productive</span></h2>
+    ${list.map(([id, st, en, label]) => `<div class="away-row">
+      <span class="when">${clock(sod(st))} – ${clock(sod(en))}${state.view !== 'day' ? ` <span class="faint">${new Date(st*1000).toLocaleDateString('en-IN',{day:'numeric', month:'short'})}</span>` : ''}</span>
+      <span class="tm">${fmt(en-st)}</span>
+      ${bridge ? `<select data-away="${id}" aria-label="What were you doing?"><option value="">What was this?</option>${AWAY_LABELS.map(l => `<option ${l===label?'selected':''}>${l}</option>`).join('')}</select>`
+               : `<span class="muted">${esc(label || 'Not labelled')}</span>`}
+    </div>`).join('')}</section>`;
+}
 
-  $('#main').innerHTML = `
-  <div class="grid tiles">
-    <div class="card tile"><div class="k">Total active</div><div class="v">${fmt(total)}</div><div class="s">computer pe actual kaam</div></div>
-    <div class="card tile"><div class="k">Productive</div><div class="v" style="color:var(--accent)">${prodPct}%</div><div class="s">${fmt(prod)} productive · ${fmt(unprod)} distraction</div></div>
-    <div class="card tile"><div class="k">Day</div><div class="v" style="font-size:20px">${clock(first)}</div><div class="s">se ${clock(last)} tak</div></div>
-    <div class="card tile"><div class="k">Sabse zyada</div><div class="v" style="font-size:20px">${esc(topApp[0])}</div><div class="s">${fmt(topApp[1])}</div></div>
-  </div>
+function projectsPanel(E, a, b){
+  const lo = a.getTime()/1000, hi = addDays(b,1).getTime()/1000, tot = {};
+  for (const [name, st, en] of E.projects) add(tot, name, Math.max(0, Math.min(en, hi) - Math.max(st, lo)));
+  const items = sorted(tot), max = items.length ? items[0][1] : 1;
+  const run = E.running ? `<div class="running"><span class="live"><i></i></span><b>${esc(E.running.name)}</b>
+      <span class="tm">${fmt(Date.now()/1000 - E.running.start)}</span>${bridge ? '<button class="btn ghost" data-pstop>Stop</button>' : ''}</div>` : '';
+  const start = bridge && !E.running ? `<form class="proj-start" data-pform><input name="p" placeholder="What are you working on?" maxlength="60" aria-label="Project name"><button class="btn">Start</button></form>
+      ${E.recent.length ? `<div class="chips">${E.recent.map(n => `<button data-pstart="${esc(n)}">▶ ${esc(n)}</button>`).join('')}</div>` : ''}` : '';
+  return `<section class="panel"><h2>Projects <span class="hint">a timer you start and stop yourself</span></h2>${run}${start}
+    ${items.map(([n,v]) => `<div class="item" style="cursor:default"><div class="nm"><i class="dot" style="background:var(--accent)"></i><span>${esc(n)}</span></div>
+      <div class="meta"><span class="tm">${fmt(v)}</span></div><div class="bar"><i style="width:${v/max*100}%;background:var(--accent)"></i></div></div>`).join('')
+      || (run || start ? '' : '<div class="muted">No project time here. Start one from the menu bar or the DeskTime app.</div>')}</section>`;
+}
 
-  <div class="card section">
-    <h2>Timeline — kis time kya kiya</h2>
-    <div class="tl" id="tl">${segs}</div>
-    <div class="ticks">${ticks}</div>
-    <div class="legend">${legend}</div>
-  </div>
+// ---------- work: kis project pe kis time kaam kiya ----------
+const IDE = /^(visual studio code|code|cursor|xcode|intellij idea|pycharm|webstorm|android studio|sublime text|zed|windsurf)$/i;
+// Activity se project ka naam: VS Code ka folder, GitHub repo, Google Doc / Notion page, warna site / app
+function projectOf(r){
+  if (r.offline) return 'Meetings & offline work';
+  if (r.priv) return (r.domain || r.app) + ' (private)';
+  if (IDE.test(r.app) && r.title.includes(' — ')) return r.title.split(' — ').pop().replace(/\s*\[[^\]]*\]$/, '').trim();
+  if (r.domain === 'github.com'){ const m = r.url.match(/github\.com\/([^/?#]+\/[^/?#]+)/); if (m) return m[1]; }
+  if (/^(docs|sheets|slides)\.google\.com$/.test(r.domain) && r.title) return r.title.replace(/ - Google (Docs|Sheets|Slides)$/, '');
+  if (/notion\.so$/.test(r.domain) && r.title) return r.title.replace(/ \| Notion$/, '');
+  return r.domain || r.app;
+}
 
-  <div class="grid two section">
-    <div class="card"><h2>Category</h2><div class="stack">${stack}</div>${catRows}</div>
-    <div class="card"><h2>Har ghante me kitna kaam</h2><div class="hours">${hourCols}</div><div class="hlabels">${hourLabels}</div></div>
-  </div>
+async function renderWork(){
+  charts.forEach(c => c.dispose()); charts = [];
+  const [a, b] = range(), keys = keysIn(a, b), d = parse(state.date);
+  $('#label').textContent = 'Work';
+  $('#sublabel').textContent = d.toLocaleDateString('en-IN',{weekday:'long', day:'numeric', month:'long'}) + ' · what you worked on, and when';
+  $('#next').disabled = state.date >= todayKey();
+  history.replaceState(null, '', `#work/${state.date}`);
+  const [, , E] = await Promise.all([load(keys), renderMini(), loadExtras(a, b)]);
+  const rows = rowsFor(keys).concat(offlineRows(E, keys)).sort((x,y) => x.s - y.s);
+  let meetings = [];
+  if (bridge){
+    const G = JSON.parse(await bridge.postMessage({type:'agenda', from:state.date, to:state.date, fresh:!gFetched}));
+  gFetched = true;
+    meetings = G.events.filter(e => !e.allDay && e.start < Date.now()/1000);
+  }
+  if (!rows.length && !E.projects.length){
+    $('#main').innerHTML = '<div class="panel empty-state"><h3>No work recorded</h3>Pick another day from the calendar, or come back after some time at the computer.</div>';
+    return;
+  }
+  // 1) lagatar same project = ek block (3 min tak ka gap chalega)
+  const blocks = [];
+  for (const r of rows){
+    const p = projectOf(r), L = blocks[blocks.length-1];
+    if (L && L.p === p && r.s - L.e < 180){ L.e = Math.max(L.e, r.e); L.d += r.d; add(L.apps, r.app, r.d); if (r.title && !r.priv) add(L.titles, r.title, r.d); add(L.cats, r.cat, r.d); }
+    else blocks.push({p, s:r.s, e:r.e, d:r.d, apps:{[r.app]:r.d}, titles:r.title && !r.priv ? {[r.title]:r.d} : {}, cats:{[r.cat]:r.d}});
+  }
+  // 2) project ke hisaab se: kul time + kab-kab
+  const P = {};
+  for (const bl of blocks){
+    const g = P[bl.p] = P[bl.p] || {d:0, ranges:[], apps:{}, titles:{}, cats:{}};
+    g.d += bl.d;
+    if (bl.e - bl.s >= 120) g.ranges.push([bl.s, bl.e]);
+    for (const [k,v] of Object.entries(bl.apps)) add(g.apps, k, v);
+    for (const [k,v] of Object.entries(bl.titles)) add(g.titles, k, v);
+    for (const [k,v] of Object.entries(bl.cats)) add(g.cats, k, v);
+  }
+  // manual project timers bhi
+  const lo = a.getTime()/1000, hi = addDays(b,1).getTime()/1000;
+  for (const [name, st, en] of E.projects){
+    const s0 = Math.max(st, lo), e0 = Math.min(en, hi);
+    if (e0 <= s0) continue;
+    const g = P['⏱ ' + name] = P['⏱ ' + name] || {d:0, ranges:[], apps:{}, titles:{}, cats:{}, timer:true};
+    g.d += e0 - s0; g.ranges.push([sod(s0), sod(e0)]);
+  }
+  const groups = Object.entries(P).sort((x,y) => y[1].d - x[1].d);
+  const focus = blocks.filter(bl => prodOf(sorted(bl.cats)[0][0]) === true);
+  const longest = focus.reduce((m, bl) => bl.e - bl.s > m.e - m.s ? bl : m, {s:0, e:0, p:''});
+  const switches = blocks.filter(bl => bl.d >= 60).length;
+  const focusTotal = rows.filter(r => r.prod === true).reduce((t, r) => t + r.d, 0);
 
-  <div class="grid two section">
-    <div class="card"><h2>Apps <span class="sub">(click karo detail ke liye)</span></h2>${appRows}</div>
-    <div class="card"><h2>Websites</h2>${siteRows}</div>
-  </div>
+  const groupHtml = groups.slice(0, state.more.work ? 200 : 15).map(([p, g]) => {
+    const cat = g.timer ? null : sorted(g.cats)[0][0], col = g.timer ? 'var(--accent)' : color(cat), id = 'work:'+p, open = state.open[id];
+    const apps = sorted(g.apps).slice(0, 3).map(([k]) => k).join(', ');
+    return `<div class="proj" data-open="${esc(id)}" role="button" tabindex="0" aria-expanded="${!!open}">
+      <div class="top-row"><i class="dot" style="background:${col}"></i><span class="nm" title="${esc(p)}">${esc(p)}${g.timer ? '<span class="tag">timer</span>' : ''}</span><span class="tm">${fmt(g.d)}</span></div>
+      ${g.ranges.length ? `<div class="ranges">${g.ranges.slice(0, 12).map(([s, e]) => `<span>${clock(s)} – ${clock(e)}</span>`).join('')}${g.ranges.length > 12 ? `<span>+${g.ranges.length - 12} more</span>` : ''}</div>` : ''}
+      ${apps && !g.timer ? `<div class="apps">${esc(apps)}${cat ? ' · ' + esc(cat) : ''}</div>` : ''}
+      ${open && Object.keys(g.titles).length ? `<div class="detail" style="margin-left:20px">${sorted(g.titles).slice(0, 15).map(([t, v]) =>
+        `<div class="d"><span class="ttl" title="${esc(t)}">${esc(t)}</span><span class="t">${fmt(v)}</span></div>`).join('')}</div>` : ''}
+    </div>`;
+  }).join('');
 
-  <div class="grid two section">
-    <div class="card"><h2>Is hafte</h2><div class="week">${weekCols}</div></div>
-    <div class="card"><h2>Activity log</h2><div class="log">${logRows || '<div class="sub">1 min se lambi koi activity nahi.</div>'}</div></div>
-  </div>`;
+  // timeline: kaam ke blocks (2 min+), meetings, breaks — naya sabse upar
+  const items = blocks.filter(bl => bl.e - bl.s >= 120).map(bl => ({kind:'work', s:bl.s, e:bl.e, bl}));
+  for (const m of meetings) items.push({kind:'meet', s:sod(m.start), e:sod(Math.min(m.end, Date.now()/1000)), m});
+  for (const [, st, en, label] of E.away) if (!OFFLINE_WORK.includes(label)) for (const q of splitDays(st, en)) if (q.day === state.date) items.push({kind:'brk', s:q.s, e:q.e, label:label || 'Break'});
+  items.sort((x,y) => y.s - x.s);
+  const tl = items.map(it => {
+    if (it.kind === 'meet') return `<div class="blk meet"><span class="t">${clock(it.s)}<small>${clock(it.e)}</small></span><i class="bar" style="background:${esc(it.m.color)}"></i>
+      <span style="min-width:0"><div class="ttl">📅 ${esc(it.m.title)}</div><div class="sub">${esc(it.m.calendar)}</div></span><span class="d">${fmt(it.e - it.s)}</span></div>`;
+    if (it.kind === 'brk') return `<div class="blk brk"><span class="t">${clock(it.s)}<small>${clock(it.e)}</small></span><i class="bar" style="background:var(--brk)"></i>
+      <span><div class="ttl">☕ ${esc(it.label)}</div></span><span class="d">${fmt(it.e - it.s)}</span></div>`;
+    const bl = it.bl, cat = sorted(bl.cats)[0][0], top = sorted(bl.titles)[0];
+    return `<div class="blk"><span class="t">${clock(bl.s)}<small>${clock(bl.e)}</small></span><i class="bar" style="background:${color(cat)}"></i>
+      <span style="min-width:0"><div class="ttl" title="${esc(bl.p)}">${esc(bl.p)}</div><div class="sub" title="${esc(top ? top[0] : '')}">${esc(sorted(bl.apps).map(([k]) => k).join(', '))}${top && top[0] !== bl.p ? ' · ' + esc(top[0]) : ''}</div></span>
+      <span class="d">${fmt(bl.d)}</span></div>`;
+  }).join('');
 
-  // events
-  const tip = $('#tip');
-  $('#tl').addEventListener('mousemove', ev => {
-    const el = ev.target.closest('.seg');
-    if (!el){ tip.style.display='none'; return; }
-    const r = rows[+el.dataset.i];
-    tip.innerHTML = `<b>${esc(r[4] || r[2])}</b>${esc(r[3])}<br><span style="opacity:.7">${clock(r[0])} – ${clock(r[1])} · ${fmt(r[1]-r[0])} · ${esc(r[5])}</span>`;
-    tip.style.display = 'block';
-    tip.style.left = Math.min(ev.clientX + 12, innerWidth - 360) + 'px';
-    tip.style.top = (ev.clientY + 14) + 'px';
+  $('#main').innerHTML = `<div class="stack">
+    <section class="hero"><div class="stats" style="margin-top:0;border-top:0;padding-top:0">
+      ${stat(fmt(focusTotal), 'Productive work', 'time on work, learning, communication', 'color:var(--prod)')}
+      ${stat(groups.length, 'Things worked on', 'projects, repos, docs and sites')}
+      ${stat(longest.p ? fmt(longest.e - longest.s) : '—', 'Longest focus', longest.p ? esc(longest.p) + ', ' + clock(longest.s) : 'no focus block yet')}
+      ${stat(switches, 'Switches', 'times you changed what you were on')}
+    </div></section>
+    <div class="agenda-grid">
+      <section class="panel"><h2>By project <span class="hint">click one to see files and pages</span></h2>${groupHtml}
+        ${groups.length > 15 ? `<button class="show-more" data-more="work">${state.more.work ? 'Show less' : `Show all ${groups.length}`}</button>` : ''}</section>
+      <section class="panel"><h2>Timeline <span class="hint">newest first · blocks of 2 min or more</span></h2><div class="wt">${tl || '<div class="muted">No blocks longer than 2 minutes.</div>'}</div></section>
+    </div></div>`;
+}
+
+// ---------- agenda: meetings (Mac Calendar), reminders, tasks ----------
+let gFetched = false;   // Google Tasks pehli baar khulne pe fresh lao, baad me app har 5 min laati hai
+async function renderAgenda(){
+  charts.forEach(c => c.dispose()); charts = [];
+  renderMini();
+  const d = parse(state.date), isToday = state.date === todayKey();
+  $('#label').textContent = isToday ? 'Agenda' : d.toLocaleDateString('en-IN',{weekday:'long'});
+  $('#sublabel').textContent = d.toLocaleDateString('en-IN',{weekday:'long', day:'numeric', month:'long'}) + ' · meetings, reminders and tasks';
+  $('#next').disabled = false;
+  history.replaceState(null, '', `#agenda/${state.date}`);
+  if (!bridge){ $('#main').innerHTML = '<div class="panel empty-state"><h3>Agenda lives in the app</h3>Open DeskTime (menu bar → Open Dashboard) to see meetings, reminders and tasks.</div>'; return; }
+  const G = JSON.parse(await bridge.postMessage({type:'agenda', from:state.date, to:state.date}));
+  const now = Date.now()/1000, hm = t => clock(sod(t));
+  const timed = G.events.filter(e => !e.allDay), allDay = G.events.filter(e => e.allDay);
+  let nowShown = !isToday;
+  const evHtml = timed.map(e => {
+    let line = '';
+    if (!nowShown && e.start > now){ nowShown = true; line = `<div class="now-line">Now ${clock(sod(now))}</div>`; }
+    const cls = e.end < now ? 'past' : e.start <= now ? 'now' : '';
+    return line + `<div class="ev ${cls}"><span class="t">${hm(e.start)}<small>${fmt(e.end - e.start)}</small></span><i class="bar" style="background:${esc(e.color)}"></i>
+      <span style="min-width:0"><div class="ttl" title="${esc(e.title)}">${esc(e.title)}</div><div class="sub">${esc([e.calendar, e.location].filter(Boolean).join(' · '))}</div></span>
+      ${e.link && e.end > now ? `<button class="join" data-join="${esc(e.link)}">Join</button>` : '<span></span>'}</div>`;
+  }).join('') + (!nowShown && timed.length ? `<div class="now-line">Now ${clock(sod(now))}</div>` : '');
+  const connect = G.access !== 'granted' ? `<section class="panel connect"><h2>Connect your calendar</h2>
+      DeskTime reads the Mac Calendar app, so Gmail / Google Meet events, and anything Gemini or Spark adds to your Google Calendar, show up here with reminders.
+      <ol><li>System Settings → Internet Accounts → add your Google account and turn on <b>Calendars</b>.</li>
+          <li>Allow DeskTime to read calendars and reminders.</li></ol>
+      <div class="btns">${G.access === 'ask' ? '<button class="btn" data-cal>Allow calendar access</button>' : '<button class="btn" data-calsettings>Open Privacy settings</button>'}
+        <button class="btn ghost" data-accounts>Open Internet Accounts</button></div>
+      ${G.access === 'denied' ? '<p class="faint" style="font-size:12.5px;margin-bottom:0">Access was turned off. Turn on DeskTime under Privacy & Security → Calendars and Reminders.</p>' : ''}</section>` : '';
+  const tasks = G.tasks.map(t => `<div class="task ${t.done ? 'done' : ''}"><input type="checkbox" data-task="${t.id}" ${t.done ? 'checked' : ''} aria-label="Done">
+      <span class="ttl">${esc(t.title)}</span><span class="when">${t.due ? hm(t.due) : ''}</span><button class="del" data-deltask="${t.id}" aria-label="Delete task">×</button></div>`).join('');
+  // Google Tasks: is din ke, aaj ho to purane baaki (overdue) + bina date wale bhi
+  const today = todayKey();
+  const gt = (G.gtasks || []).filter(t => t.due === state.date || (state.date === today && !t.done && (t.due === null || t.due < today)))
+    .sort((x,y) => (x.done - y.done) || String(x.due || '9').localeCompare(String(y.due || '9')));
+  const gHtml = gt.map(t => `<div class="task ${t.done ? 'done' : ''}"><input type="checkbox" data-gtask="${esc(t.id)}" data-acc="${esc(t.account)}" data-list="${esc(t.listId)}" ${t.done ? 'checked' : ''} aria-label="Done">
+      <span class="ttl" title="${esc(t.title)}">${esc(t.title)}</span>
+      <span class="when ${t.due && t.due < today && !t.done ? 'overdue' : ''}">${t.due === null ? 'No date' : t.due < today ? 'Overdue' : ''}</span>
+      <span class="gtag" title="${esc(t.account)}">${esc(t.list)} · ${esc(t.account.split('@')[0])}</span></div>`).join('');
+  const gNote = !G.google.configured || !G.google.accounts.length
+    ? '<div class="faint" style="font-size:12.5px;margin-top:8px">Want Google Tasks (from Gemini, Spark) here too? <a href="#" data-goview="settings">Connect Google</a></div>'
+    : G.google.error ? `<div class="gerr">${esc(G.google.error)}</div>` : '';
+  const rem = G.reminders.map(r => `<div class="task"><span>◦</span><span class="ttl">${esc(r.title)}</span><span class="when">${hm(r.due)}</span><span class="faint" style="font-size:12px">${esc(r.list)}</span></div>`).join('');
+  $('#main').innerHTML = `<div class="stack">${connect}<div class="agenda-grid">
+    <section class="panel"><h2>Schedule <span class="hint">reminder ${(RULES.settings||{}).remind_minutes ?? 10} min before</span></h2>
+      ${allDay.length ? `<div class="chips">${allDay.map(e => `<button style="cursor:default">${esc(e.title)}</button>`).join('')}</div>` : ''}
+      ${evHtml || `<div class="muted" style="padding:8px">${G.access === 'granted' ? 'No meetings on this day.' : 'Connect your calendar to see meetings here.'}</div>`}</section>
+    <div class="stack">
+      <section class="panel"><h2>Tasks</h2>
+        <form class="task-form" data-taskform><input name="title" placeholder="Add a task" maxlength="200" aria-label="Task"><input name="time" type="time" aria-label="Time (optional)"><button class="btn">Add</button></form>
+        ${tasks}${gHtml}${tasks || gHtml ? '' : '<div class="muted" style="padding:6px 8px">No tasks yet. Add one with a time to get a reminder.</div>'}${gNote}</section>
+      ${rem ? `<section class="panel"><h2>Reminders <span class="hint">from the Reminders app</span></h2>${rem}</section>` : ''}
+      <div class="tipbox"><b>Tip:</b> ask Gemini or Spark to “add this to my Google Calendar at 3 pm” — it appears here and you get a reminder ${(RULES.settings||{}).remind_minutes ?? 10} minutes before. Every day at ${esc((RULES.settings||{}).schedule_time || '10:00')} you get today’s schedule.</div>
+    </div></div></div>`;
+}
+
+// ---------- settings ----------
+async function googlePanel(){
+  if (!bridge) return '';
+  const g = JSON.parse(await bridge.postMessage({type:'googleInfo'}));
+  const accs = g.accounts.map(e => `<div class="gacc"><span>✓</span><b>${esc(e)}</b><button class="btn ghost" data-gdisc="${esc(e)}">Disconnect</button></div>`).join('');
+  return `<section class="panel settings" style="margin-top:16px"><h3>Google Tasks</h3>
+    <p class="muted" style="margin:0 0 6px">Tasks you or Gemini / Spark add to Google Tasks show up in Agenda — from one or more Google accounts. You sign in on Google’s own page; DeskTime never sees your password, and the sign-in key is kept in your Mac’s Keychain.</p>
+    ${accs || '<p class="faint" style="margin:6px 0">No Google account connected.</p>'}
+    ${g.error ? `<div class="gerr">${esc(g.error)}</div>` : ''}
+    <details class="steps" ${g.configured ? '' : 'open'}><summary>One-time setup: create your own Google sign-in key (about 5 minutes)</summary><ol>
+      <li>Open <b>console.cloud.google.com</b> and create a project called “DeskTime”.</li>
+      <li><b>APIs &amp; Services → Library</b>: search “Google Tasks API” and click <b>Enable</b>.</li>
+      <li><b>OAuth consent screen</b>: choose <b>External</b>, app name “DeskTime”, your email. Then click <b>Publish app</b> (otherwise Google signs you out every 7 days). Google will say it’s unverified — that’s fine for your own use.</li>
+      <li><b>Credentials → Create credentials → OAuth client ID</b> → type <b>Desktop app</b>.</li>
+      <li>Copy the <b>Client ID</b> and <b>Client secret</b> into the boxes below and click Save.</li>
+      <li>Click <b>Connect a Google account</b>. On Google’s “unverified app” page choose <b>Advanced → Go to DeskTime</b>. Repeat for your other account.</li></ol></details>
+    <div class="gform"><input id="gcid" placeholder="Client ID" value="${esc(g.clientId)}" aria-label="Client ID" autocomplete="off">
+      <input id="gsec" type="password" placeholder="${g.configured ? 'Client secret saved' : 'Client secret'}" aria-label="Client secret" autocomplete="off">
+      <button class="btn ghost" data-gsave>Save</button></div>
+    <div class="save-row" style="margin-top:6px"><button class="btn" data-gconnect ${g.configured ? '' : 'disabled'}>Connect a Google account</button><span id="gmsg" class="muted"></span></div>
+  </section>`;
+}
+
+async function renderSettings(){
+  charts.forEach(c => c.dispose()); charts = [];
+  renderMini();
+  $('#label').textContent = 'Settings'; $('#sublabel').textContent = 'Goals, alerts, privacy and data';
+  history.replaceState(null, '', `#settings/${state.date}`);
+  const S = RULES.settings || {}, P = RULES.private || {}, dis = bridge ? '' : 'disabled';
+  const num = (k, v, min, max, step=1) => `<input type="number" name="${k}" value="${v}" min="${min}" max="${max}" step="${step}" ${dis}>`;
+  const chk = (k, v) => `<input type="checkbox" name="${k}" ${v ? 'checked' : ''} ${dis}>`;
+  const keep = S.retention_days || 0;
+  $('#main').innerHTML = `<form class="panel settings" id="settingsForm">
+    ${bridge ? '' : '<p class="muted" style="margin-top:0">Open the DeskTime app (menu bar → Open Dashboard) to change settings.</p>'}
+    <h3>Goal</h3>
+    <label class="field"><span>Daily productive goal<small>Used for Effectiveness and the goal alert</small></span><span>${num('goal_hours', RULES.goal_hours || 8, 1, 16, 0.5)} h</span></label>
+    <h3>Tracking</h3>
+    <label class="field"><span>Count me as away after<small>No keyboard or mouse for this long</small></span><span>${num('idle_minutes', S.idle_minutes || 2, 1, 30)} min</span></label>
+    <label class="field"><span>Ask about breaks longer than<small>They show up under “Away from computer” to label</small></span><span>${num('away_minutes', S.away_minutes || 15, 5, 120, 5)} min</span></label>
+    <h3>Alerts</h3>
+    <label class="field"><span>When I reach my daily goal</span>${chk('notify_goal', S.notify_goal !== false)}</label>
+    <label class="field"><span>When I’m on social media or entertainment for<small>One gentle reminder per stretch</small></span><span>${chk('notify_distraction', S.notify_distraction !== false)} ${num('distraction_minutes', S.distraction_minutes || 30, 5, 180, 5)} min</span></label>
+    <label class="field"><span>When I come back from a long break<small>A reminder to label it</small></span>${chk('notify_away', !!S.notify_away)}</label>
+    <h3>Privacy</h3>
+    <label class="field"><span>Extra private websites<small>One per line. Only the site name is saved, never the page or link.</small></span><textarea name="sites" ${dis} placeholder="example.com">${esc((P.sites||[]).join('\n'))}</textarea></label>
+    <label class="field"><span>Extra private words<small>If a link or window title contains one of these, its content isn’t saved.</small></span><textarea name="words" ${dis} placeholder="salary">${esc((P.words||[]).join('\n'))}</textarea></label>
+    <p class="faint" style="font-size:12.5px">Always private: password fields, email, messages, password managers, login, banking, payment and API-key pages.</p>
+    <h3>Agenda</h3>
+    <label class="field"><span>Remind me before meetings and tasks<small>0 turns reminders off</small></span><span>${num('remind_minutes', S.remind_minutes ?? 10, 0, 60)} min</span></label>
+    <label class="field"><span>Send today’s schedule every day at<small>Meetings and tasks for the day</small></span><span>${chk('notify_schedule', S.notify_schedule !== false)} <input type="time" name="schedule_time" value="${esc(S.schedule_time || '10:00')}" ${dis} style="border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:5px 8px;color:var(--ink)"></span></label>
+    <h3>Data</h3>
+    <label class="field"><span>Keep history for<small>A backup is saved every day (last 14 kept) in the data folder</small></span>
+      <select name="retention_days" ${dis}>${[[0,'Forever'],[365,'1 year'],[180,'6 months'],[90,'3 months']].map(([v,l]) => `<option value="${v}" ${+keep===v?'selected':''}>${l}</option>`).join('')}</select></label>
+    ${bridge ? '<div class="save-row"><button class="btn">Save settings</button><span id="savedMsg"></span></div>' : ''}
+  </form>` + await googlePanel();
+}
+
+async function saveSettings(form){
+  const f = new FormData(form), n = k => parseFloat(f.get(k)), lines = k => String(f.get(k)||'').split('\n').map(x => x.trim()).filter(Boolean);
+  RULES = JSON.parse(await bridge.postMessage({type:'saveSettings', goal_hours:n('goal_hours'),
+    settings:{idle_minutes:n('idle_minutes'), away_minutes:n('away_minutes'), distraction_minutes:n('distraction_minutes'), retention_days:n('retention_days'),
+              notify_goal:f.has('notify_goal'), notify_distraction:f.has('notify_distraction'), notify_away:f.has('notify_away'),
+              remind_minutes:n('remind_minutes'), notify_schedule:f.has('notify_schedule'), schedule_time:String(f.get('schedule_time') || '10:00')},
+    private:{sites:lines('sites'), words:lines('words')}}));
+  memo = new Map();
+  $('#savedMsg').innerHTML = '<span class="saved">Saved</span>';
+}
+
+// ---------- export ----------
+let current = {rows:[], keys:[]};
+function exportCSV(){
+  const q = v => /[",\n]/.test(v) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v);
+  const hm = x => pad(Math.floor(x/3600)%24) + ':' + pad(Math.floor(x%3600/60));
+  const lines = [['date','start','end','minutes','app','site','title','url','category','productive'].join(',')];
+  for (const r of current.rows) lines.push([r.day, hm(r.s), hm(r.e), (r.d/60).toFixed(1), r.app, r.domain, r.title, r.url, r.cat,
+    r.prod === true ? 'yes' : r.prod === false ? 'no' : ''].map(q).join(','));
+  const [a, b] = range(), name = `desktime-${keyOf(a)}${state.view === 'day' ? '' : '-to-' + keyOf(b)}.csv`, text = lines.join('\n');
+  if (bridge) return bridge.postMessage({type:'save', name, content:text});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(new Blob([text], {type:'text/csv'})); link.download = name; link.click();
+}
+
+// ---------- charts (Apache ECharts) ----------
+function base(){
+  return {textStyle:{fontFamily:css('--text'), color:css('--muted')}, animationDuration:400,
+    tooltip:{backgroundColor:css('--ink'), borderWidth:0, textStyle:{color:css('--surface'), fontSize:12}, extraCssText:'border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,.25)'}};
+}
+function mk(id, opt){
+  const el = document.getElementById(id);
+  if (!el || !hasCharts) return null;
+  const c = echarts.init(el, null, {renderer:'svg'});
+  c.setOption(Object.assign(base(), opt));
+  charts.push(c);
+  return c;
+}
+function drawCharts(rows, A, keys){
+  if (!hasCharts){ document.querySelectorAll('.chart').forEach(el => el.innerHTML = '<div class="muted">Charts couldn’t load.</div>'); return; }
+  const cats = catOrder().filter(c => A.byCat[c]).map(c => [c, A.byCat[c]]);
+  mk('catChart', {
+    tooltip:{...base().tooltip, formatter:p => `<b>${esc(p.name)}</b><br>${fmt(p.value)} · ${p.percent}%`},
+    legend:{orient:'vertical', right:0, top:'middle', icon:'roundRect', itemWidth:9, itemHeight:9, textStyle:{color:css('--muted')},
+            formatter:n => `${n}  ${fmt(A.byCat[n])}`},
+    series:[{type:'pie', radius:['56%','80%'], center:['32%','50%'], avoidLabelOverlap:true, label:{show:true, position:'center', formatter:() => `${pct(A.prod,A.total)}%\nproductive`,
+            fontFamily:css('--num'), fontSize:17, fontWeight:600, color:css('--ink'), lineHeight:22},
+            emphasis:{scale:true, scaleSize:4, label:{show:true}}, itemStyle:{borderColor:css('--surface'), borderWidth:2, borderRadius:4},
+            data:cats.map(([c,v]) => ({name:c, value:v, itemStyle:{color:color(c)}}))}]
   });
-  $('#tl').addEventListener('mouseleave', () => tip.style.display='none');
-  document.querySelectorAll('[data-app]').forEach(el => el.onclick = () => { openApp = openApp === el.dataset.app ? null : el.dataset.app; render(); });
-  document.querySelectorAll('[data-day]').forEach(el => el.onclick = () => { if (DATA.days[el.dataset.day]){ current = el.dataset.day; openApp = null; render(); } });
+  const catNames = cats.map(([c]) => c);
+  const axis = {axisLine:{lineStyle:{color:css('--line')}}, axisTick:{show:false}, axisLabel:{color:css('--faint')}};
+  if (state.view === 'day'){
+    const hours = Array.from({length:24}, () => ({}));
+    for (const r of rows){ let t = r.s; while (t < r.e){ const h = Math.floor(t/3600), end = Math.min(r.e, (h+1)*3600); add(hours[Math.min(h,23)], r.cat, end-t); t = end; } }
+    const used = hours.map((h,i) => Object.keys(h).length ? i : -1).filter(i => i >= 0);
+    const lo = Math.max(0, Math.min(...used) - 1), hi = Math.min(23, Math.max(...used) + 1);
+    const idx = Array.from({length:hi-lo+1}, (_,i) => lo+i);
+    mk('hourChart', {
+      grid:{left:36, right:8, top:10, bottom:24},
+      tooltip:{...base().tooltip, trigger:'axis', axisPointer:{type:'shadow'},
+        formatter:ps => `<b>${hourLbl(idx[ps[0].dataIndex])}</b>` + ps.filter(p => p.value).map(p => `<br>${p.marker}${esc(p.seriesName)} ${fmt(p.value)}`).join('')},
+      xAxis:{type:'category', data:idx.map(hourLbl), ...axis},
+      yAxis:{type:'value', max:3600, interval:1800, splitLine:{lineStyle:{color:css('--line'), type:'dashed'}}, axisLabel:{color:css('--faint'), formatter:v => v ? (v/60)+'m' : ''}},
+      series:catNames.map(c => ({name:c, type:'bar', stack:'h', barWidth:'62%', itemStyle:{color:color(c), borderRadius:2, borderColor:css('--surface'), borderWidth:1}, data:idx.map(i => hours[i][c] || 0)}))
+    });
+  }
+  if (state.view === 'week'){
+    const c = mk('daysChart', {
+      grid:{left:44, right:8, top:24, bottom:28},
+      tooltip:{...base().tooltip, trigger:'axis', axisPointer:{type:'shadow'},
+        formatter:ps => { const D = A.byDay[keys[ps[0].dataIndex]]; return `<b>${ps[0].axisValue}</b><br>${D ? fmt(D.total)+' · '+pct(D.prod,D.total)+'% productive' : 'no activity'}` + ps.filter(p => p.value).map(p => `<br>${p.marker}${esc(p.seriesName)} ${fmt(p.value)}`).join(''); }},
+      xAxis:{type:'category', data:keys.map(k => parse(k).toLocaleDateString('en-IN',{weekday:'short', day:'numeric'})), ...axis},
+      yAxis:{type:'value', interval:3600*Math.max(1, Math.ceil(Math.max(1, ...keys.map(k => (A.byDay[k]||{total:0}).total))/3600/5)), splitLine:{lineStyle:{color:css('--line'), type:'dashed'}}, axisLabel:{color:css('--faint'), formatter:v => v ? Math.round(v/3600)+'h' : ''}},
+      series:catNames.map((cn, i) => ({name:cn, type:'bar', stack:'d', barWidth:'46%', itemStyle:{color:color(cn), borderRadius: i === catNames.length-1 ? [4,4,0,0] : 0, borderColor:css('--surface'), borderWidth:1},
+        data:keys.map(k => (A.byDay[k] && A.byDay[k].byCat[cn]) || 0)}))
+    });
+    if (c) c.on('click', p => { state.view = 'day'; state.date = keys[p.dataIndex]; render(); });
+  }
+}
+addEventListener('resize', () => charts.forEach(c => c.resize()));
+
+// ---------- mini calendar ----------
+async function renderMini(){
+  const sel = parse(state.date);
+  const m = state.mini || new Date(sel.getFullYear(), sel.getMonth(), 1);
+  state.mini = m;
+  const a = new Date(m.getFullYear(), m.getMonth(), 1), b = new Date(m.getFullYear(), m.getMonth()+1, 0);
+  await loadSummary(a, b);
+  const [ra, rb] = range();
+  $('#mLabel').textContent = a.toLocaleDateString('en-IN',{month:'long', year:'numeric'});
+  $('#mNext').disabled = keyOf(addDays(b,1)) > todayKey() && state.view !== 'agenda';
+  let h = ['M','T','W','T','F','S','S'].map(d => `<span class="w">${d}</span>`).join('');
+  for (let i = 0; i < (a.getDay()+6)%7; i++) h += '<span></span>';
+  for (const k of keysIn(a, b)){
+    const d = parse(k), cls = [summary[k] > 0 ? 'has' : '', k === todayKey() ? 'today' : '', k === state.date ? 'sel' : '',
+      state.view !== 'day' && d >= ra && d <= rb && k !== state.date ? 'inrange' : ''].join(' ');
+    h += `<button class="${cls}" data-day="${k}" ${k > todayKey() && state.view !== 'agenda' ? 'disabled' : ''} title="${summary[k] ? fmt(summary[k]) : ''}">${d.getDate()}</button>`;
+  }
+  $('#mini').innerHTML = h;
 }
 
-function row(name, v, max, col, extra='', cls=''){
-  return `<div class="row ${cls}"><div class="dot" style="background:${col}"></div>
-    <div><div class="name">${esc(name)}</div><div class="bar"><i style="width:${v/max*100}%;background:${col}"></i></div></div>
-    <div class="t">${fmt(v)}${extra ? '<br>'+extra : ''}</div></div>`;
+// ---------- ribbon tooltip ----------
+function bindRibbon(rows){
+  const rb = $('#ribbon'), tip = $('#tip');
+  if (!rb) return;
+  rb.addEventListener('mousemove', ev => {
+    const el = ev.target.closest('.s');
+    if (!el){ tip.style.display = 'none'; return; }
+    if (el.dataset.b !== undefined){
+      const b = JSON.parse(rb.dataset.breaks)[+el.dataset.b];
+      tip.innerHTML = `<b>☕ ${esc(b.label)}</b><span class="o">${clock(b.s)} – ${clock(b.e)} · ${fmt(b.d)} away</span>`;
+      tip.style.display = 'block'; tip.style.left = Math.min(ev.clientX + 14, innerWidth - 440) + 'px'; tip.style.top = (ev.clientY + 16) + 'px';
+      return;
+    }
+    const r = rows[+el.dataset.i];
+    const what = r.priv ? 'Private — content not read' : r.offline ? 'Away from computer, counted as work' : r.title;
+    tip.innerHTML = `<b>${esc(r.domain || r.app)}</b>${esc(what)}${r.url ? `<br><span class="o">${esc(r.url)}</span>` : ''}
+      <br><span class="o">${esc(r.app)} · ${clock(r.s)} – ${clock(r.e)} · ${fmt(r.d)} · ${esc(r.cat)}</span>`;
+    tip.style.display = 'block';
+    tip.style.left = Math.min(ev.clientX + 14, innerWidth - 440) + 'px';
+    tip.style.top = (ev.clientY + 16) + 'px';
+  });
+  rb.addEventListener('mouseleave', () => tip.style.display = 'none');
 }
 
-$('#prev').onclick = () => { const i = dayKeys.indexOf(current); if (i>0){ current = dayKeys[i-1]; openApp=null; render(); } };
-$('#next').onclick = () => { const i = dayKeys.indexOf(current); if (i<dayKeys.length-1){ current = dayKeys[i+1]; openApp=null; render(); } };
-document.addEventListener('keydown', e => { if (e.key==='ArrowLeft') $('#prev').click(); if (e.key==='ArrowRight') $('#next').click(); });
+// ---------- events ----------
+document.addEventListener('click', ev => {
+  const t = ev.target;
+  if (t.closest('a, select')) return;
+  const day = t.closest('[data-day]');
+  if (day && !day.disabled){ state.view = state.view === 'agenda' ? 'agenda' : 'day'; state.date = day.dataset.day; state.open = {}; return render(); }
+  const tab = t.closest('[data-tab]');      if (tab){ state.tab = tab.dataset.tab; state.filter = 'all'; return render(); }
+  const f = t.closest('[data-filter]');     if (f){ state.filter = f.dataset.filter; return render(); }
+  const more = t.closest('[data-more]');    if (more){ state.more[more.dataset.more] = !state.more[more.dataset.more]; return render(); }
+  const open = t.closest('[data-open]');    if (open && !t.closest('.detail')){ const k = open.dataset.open; state.open[k] = !state.open[k]; return render(); }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.matches('[data-open]')) { e.target.click(); return; }
+  if (e.target.matches('input, select') || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === 'ArrowLeft') move(-1);
+  else if (e.key === 'ArrowRight' && !$('#next').disabled) move(1);
+  else if ('dwmak,'.includes(e.key)){ state.view = {d:'day', w:'week', m:'month', a:'agenda', k:'work', ',':'settings'}[e.key]; render(); }
+  else if (e.key === 't') goToday();
+  else if (e.key === '/'){ e.preventDefault(); $('#q').focus(); }
+});
+document.addEventListener('submit', async ev => {
+  ev.preventDefault();
+  if (ev.target.id === 'settingsForm' && bridge) return saveSettings(ev.target);
+  if (ev.target.matches('[data-taskform]') && bridge){
+    const title = ev.target.title.value.trim(), tm = ev.target.time.value;
+    if (!title) return;
+    let due = null;
+    if (tm){ const [h, m] = tm.split(':').map(Number); const d = parse(state.date); d.setHours(h, m, 0, 0); due = d.getTime()/1000; }
+    await bridge.postMessage({type:'addTask', title, due});
+    return render();
+  }
+  if (ev.target.matches('[data-pform]') && bridge){
+    const name = ev.target.p.value.trim();
+    if (name){ await bridge.postMessage({type:'projectStart', name}); extras = {}; render(); }
+  }
+});
+document.addEventListener('click', async ev => {
+  if (!bridge) return;
+  const t = ev.target;
+  if (t.closest('[data-join]')) return bridge.postMessage({type:'openURL', url:t.closest('[data-join]').dataset.join});
+  if (t.closest('[data-cal]')){ await bridge.postMessage({type:'requestCalendar'}); return render(); }
+  if (t.closest('[data-accounts]')) return bridge.postMessage({type:'openSettings'});
+  if (t.closest('[data-calsettings]')) return bridge.postMessage({type:'openPrivacy'});
+  const gv = t.closest('[data-goview]');
+  if (gv){ ev.preventDefault(); return goView(gv.dataset.goview); }
+  if (t.closest('[data-gsave]')){
+    await bridge.postMessage({type:'googleSaveClient', clientId:$('#gcid').value, clientSecret:$('#gsec').value});
+    return render();
+  }
+  if (t.closest('[data-gconnect]')){
+    t.closest('[data-gconnect]').disabled = true;
+    $('#gmsg').textContent = 'Finish signing in in your browser…';
+    const r = JSON.parse(await bridge.postMessage({type:'googleConnect'}));
+    gFetched = false;
+    await render();
+    if (r.error && $('#gmsg')) $('#gmsg').innerHTML = `<span class="gerr">${esc(r.error)}</span>`;
+    else if ($('#gmsg')) $('#gmsg').innerHTML = '<span class="saved">Connected</span>';
+    return;
+  }
+  const gd = t.closest('[data-gdisc]');
+  if (gd){ await bridge.postMessage({type:'googleDisconnect', email:gd.dataset.gdisc}); return render(); }
+  const del = t.closest('[data-deltask]');
+  if (del){ await bridge.postMessage({type:'deleteTask', id:+del.dataset.deltask}); return render(); }
+});
+document.addEventListener('click', async ev => {
+  const st = ev.target.closest('[data-pstart]'), sp = ev.target.closest('[data-pstop]');
+  if (!bridge || !(st || sp)) return;
+  await bridge.postMessage(st ? {type:'projectStart', name:st.dataset.pstart} : {type:'projectStop'});
+  extras = {}; render();
+});
+document.addEventListener('change', async ev => {
+  const gk = ev.target.closest('input[data-gtask]');
+  if (gk && bridge){ gk.disabled = true; await bridge.postMessage({type:'gtaskDone', account:gk.dataset.acc, list:gk.dataset.list, id:gk.dataset.gtask, done:gk.checked}); return render(); }
+  const tk = ev.target.closest('input[data-task]');
+  if (tk && bridge){ await bridge.postMessage({type:'taskDone', id:+tk.dataset.task, done:tk.checked}); return render(); }
+  const aw = ev.target.closest('select[data-away]');
+  if (aw && bridge){ await bridge.postMessage({type:'setAwayLabel', id:+aw.dataset.away, label:aw.value}); extras = {}; return render(); }
+  const s = ev.target.closest('select[data-kind]');
+  if (!s || !bridge) return;
+  RULES = JSON.parse(await bridge.postMessage({type:'setCategory', kind:s.dataset.kind, key:s.dataset.key, cat:s.value}));
+  memo = new Map();
+  render();
+});
+
+function move(dir){
+  const d = parse(state.date);
+  if (['day','agenda','work'].includes(state.view)) state.date = keyOf(addDays(d, dir));
+  else if (state.view === 'week') state.date = keyOf(addDays(d, 7*dir));
+  else state.date = keyOf(new Date(d.getFullYear(), d.getMonth()+dir, 1));
+  if (state.date > todayKey() && state.view !== 'agenda') state.date = todayKey();
+  state.open = {}; state.more = {}; state.mini = null;
+  render();
+}
+function goToday(){ state.date = todayKey(); state.mini = null; render(); }
+$('#prev').onclick = () => move(-1);
+$('#next').onclick = () => move(1);
+$('#today').onclick = goToday;
+$('#mPrev').onclick = () => { state.mini = new Date(state.mini.getFullYear(), state.mini.getMonth()-1, 1); renderMini(); };
+$('#mNext').onclick = () => { state.mini = new Date(state.mini.getFullYear(), state.mini.getMonth()+1, 1); renderMini(); };
+document.querySelectorAll('#views button').forEach(b => b.onclick = () => { state.view = b.dataset.v; state.more = {}; render(); });
+let qt; $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => { state.q = e.target.value; render(); }, 200); });
+dark.addEventListener('change', () => render());
+document.querySelectorAll('#theme button').forEach(b => b.onclick = () => { setTheme(b.dataset.theme, true); render(); });
+
+// App me: aaj ka data har minute dobara lo (window khulne / ⌘R pe bhi)
+window.refresh = () => {
+  delete cache[todayKey()]; delete summary[todayKey()]; extras = {};
+  const busy = ['SELECT','INPUT','TEXTAREA'].includes(document.activeElement?.tagName);
+  if (!busy && state.view !== 'settings') render();
+};
+$('#csv').onclick = exportCSV;
+$('#print').onclick = () => bridge ? bridge.postMessage({type:'print'}) : print();
+if (bridge) setInterval(() => { if (!document.hidden) refresh(); }, 60000);
 render();
 </script>
 </body>

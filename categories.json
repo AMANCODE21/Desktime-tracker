@@ -1,32 +1,47 @@
 {
-  "_help": "Pehle 'domains' match hote hain (website, part-match chalega), fir 'apps' (app ka poora naam, lowercase). Jo match na ho wo 'Other'.",
+  "_help": "Websites in 'domains' are matched first (partial match works), then 'apps' (full app name, lowercase). Anything unmatched is 'Other'. goal_hours = daily productive-time goal (used for Effectiveness).",
+  "goal_hours": 8,
   "categories": {
     "Work": {
-      "color": "#2f9e44",
-      "productive": true
-    },
-    "Communication": {
-      "color": "#1c7ed6",
-      "productive": true
-    },
-    "Learning": {
-      "color": "#7048e8",
+      "slot": 1,
+      "color": "#4a86d8",
+      "dark": "#5a95e3",
       "productive": true
     },
     "Design": {
-      "color": "#e8590c",
+      "slot": 2,
+      "color": "#d98aae",
+      "dark": "#c46a93",
+      "productive": true
+    },
+    "Learning": {
+      "slot": 3,
+      "color": "#e0a43a",
+      "dark": "#b8832a",
+      "productive": true
+    },
+    "Communication": {
+      "slot": 4,
+      "color": "#3fae8c",
+      "dark": "#3f9f82",
       "productive": true
     },
     "Social Media": {
-      "color": "#e64980",
+      "slot": 5,
+      "color": "#7d6fc4",
+      "dark": "#9286d6",
       "productive": false
     },
     "Entertainment": {
-      "color": "#f03e3e",
+      "slot": 6,
+      "color": "#e2706b",
+      "dark": "#d9706b",
       "productive": false
     },
     "Other": {
-      "color": "#868e96",
+      "slot": 7,
+      "color": "#9aa3b2",
+      "dark": "#5f6a7d",
       "productive": null
     }
   },
@@ -56,7 +71,15 @@
     "youtube.com": "Entertainment",
     "netflix.com": "Entertainment",
     "primevideo.com": "Entertainment",
-    "hotstar.com": "Entertainment"
+    "hotstar.com": "Entertainment",
+    "elevenlabs.io": "Work",
+    "chatgpt.com": "Work",
+    "chat.openai.com": "Work",
+    "openai.com": "Work",
+    "gemini.google.com": "Work",
+    "aistudio.google.com": "Work",
+    "perplexity.ai": "Work",
+    "notebooklm.google.com": "Work"
   },
   "apps": {
     "code": "Work",
@@ -86,6 +109,12 @@
     "iterm2": "Work",
     "tv": "Entertainment",
     "google chrome": "Other",
-    "safari": "Other"
+    "safari": "Other",
+    "chatgpt": "Work"
+  },
+  "private": {
+    "_help": "For these, only the site/app name is saved - never the page title or full link. 'sites' = websites, 'words' = words in the link or title.",
+    "sites": [],
+    "words": []
   }
 }

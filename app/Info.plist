@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleIdentifier</key><string>app.desktimetracker</string>
+  <key>CFBundleName</key><string>DeskTime</string>
+  <key>CFBundleDisplayName</key><string>DeskTime</string>
+  <key>CFBundleExecutable</key><string>DeskTime</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleShortVersionString</key><string>1.0</string>
+  <key>CFBundleVersion</key><string>1</string>
+  <key>LSMinimumSystemVersion</key><string>13.0</string>
+  <key>NSHighResolutionCapable</key><true/>
+  <key>NSCalendarsUsageDescription</key><string>Shows your meetings in DeskTime and reminds you before they start. Calendar data stays on this Mac.</string>
+  <key>NSCalendarsFullAccessUsageDescription</key><string>Shows your meetings in DeskTime and reminds you before they start. Calendar data stays on this Mac.</string>
+  <key>NSRemindersUsageDescription</key><string>Shows your reminders in the DeskTime agenda. Data stays on this Mac.</string>
+  <key>NSRemindersFullAccessUsageDescription</key><string>Shows your reminders in the DeskTime agenda. Data stays on this Mac.</string>
+  <key>NSAppleEventsUsageDescription</key><string>Lets DeskTime see which website is open in your browser.</string>
+</dict>
+</plist>
