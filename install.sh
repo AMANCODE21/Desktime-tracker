@@ -7,7 +7,6 @@ set -euo pipefail
 DIR="$(cd "$(dirname "$0")" && pwd)"
 APP="$HOME/Applications/DeskTime.app"
 DATA="$HOME/Library/Application Support/DeskTimeTracker"
-OLD_PLIST="$HOME/Library/LaunchAgents/app.desktimetracker.plist"
 STAMP="$DATA/.build-stamp"
 
 mkdir -p "$DATA/web"
@@ -20,13 +19,7 @@ chmod 700 "$DATA/web"
 chmod 600 "$DATA/categories.json" "$DATA/web/"*
 echo "✅ Dashboard updated."
 
-# 2) Purana python background tracker (agar ho) band
-if [ -f "$OLD_PLIST" ]; then
-  launchctl unload "$OLD_PLIST" 2>/dev/null || true
-  rm -f "$OLD_PLIST"
-fi
-
-# 3) App sirf tab build karo jab uska code badla ho
+# 2) App sirf tab build karo jab uska code badla ho
 HASH="$(cat "$DIR/app/DeskTime.swift" "$DIR/app/Info.plist" "$DIR/app/make_icon.swift" | shasum -a 256 | cut -d' ' -f1)"
 if [ -d "$APP" ] && [ -f "$STAMP" ] && [ "$(cat "$STAMP")" = "$HASH" ]; then
   echo "   App code unchanged — no rebuild needed."
@@ -64,7 +57,7 @@ fi
 
 # Chalti app ko aaram se band karo (force-kill nahi)
 if pgrep -x DeskTime >/dev/null; then
-  osascript -e 'tell application id "app.desktimetracker" to quit' >/dev/null 2>&1 || true
+  osascript -e 'tell application "DeskTime" to quit' >/dev/null 2>&1 || true
   for _ in 1 2 3 4 5; do pgrep -x DeskTime >/dev/null || break; sleep 1; done
 fi
 mkdir -p "$HOME/Applications"

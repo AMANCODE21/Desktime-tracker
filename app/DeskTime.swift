@@ -926,8 +926,25 @@ enum Keychain {
         var out: CFTypeRef?
         let q = [kSecClass: kSecClassGenericPassword, kSecAttrService: service, kSecAttrAccount: account,
                  kSecReturnData: true, kSecMatchLimit: kSecMatchLimitOne] as CFDictionary
-        guard SecItemCopyMatching(q, &out) == errSecSuccess, let d = out as? Data else { return nil }
+        guard SecItemCopyMatching(q, &out) == errSecSuccess, let d = out as? Data else { return migrate(account) }
         return String(data: d, encoding: .utf8)
+    }
+    /// App ID badalne se pehle wala item (koi bhi "*.desktime.google" service) naye naam pe le aao
+    private static func migrate(_ account: String) -> String? {
+        var found: CFTypeRef?
+        let q = [kSecClass: kSecClassGenericPassword, kSecAttrAccount: account,
+                 kSecReturnAttributes: true, kSecMatchLimit: kSecMatchLimitAll] as CFDictionary
+        guard SecItemCopyMatching(q, &found) == errSecSuccess, let items = found as? [[String: Any]],
+              let old = items.compactMap({ $0[kSecAttrService as String] as? String })
+                .first(where: { $0 != service && $0.hasSuffix(".desktime.google") }) else { return nil }
+        var out: CFTypeRef?
+        let dq = [kSecClass: kSecClassGenericPassword, kSecAttrService: old, kSecAttrAccount: account,
+                  kSecReturnData: true, kSecMatchLimit: kSecMatchLimitOne] as CFDictionary
+        guard SecItemCopyMatching(dq, &out) == errSecSuccess, let d = out as? Data,
+              let v = String(data: d, encoding: .utf8) else { return nil }
+        set(v, account)
+        SecItemDelete([kSecClass: kSecClassGenericPassword, kSecAttrService: old, kSecAttrAccount: account] as CFDictionary)
+        return v
     }
     static func delete(_ account: String) {
         SecItemDelete([kSecClass: kSecClassGenericPassword, kSecAttrService: service, kSecAttrAccount: account] as CFDictionary)
