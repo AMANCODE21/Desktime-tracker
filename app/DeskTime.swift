@@ -1701,9 +1701,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUser
         setupMainMenu()
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        let img = NSImage(systemSymbolName: "timer", accessibilityDescription: "DeskTime")
-        img?.isTemplate = true
-        statusItem.button?.image = img
+        statusItem.button?.image = menuBarIcon()
         statusItem.button?.imagePosition = .imageLeading
         let menu = NSMenu()
         menu.delegate = self
@@ -1757,6 +1755,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUser
         }
         if let p = store.runningProject() { title += "  · " + p.name }
         statusItem.button?.title = title
+    }
+
+    /// Menu bar icon: app icon jaisa ring (72% bhara) + suiyan, template taaki light / dark dono me sahi dikhe
+    func menuBarIcon() -> NSImage {
+        let img = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in
+            let c = NSPoint(x: 9, y: 9), r: CGFloat = 6.6
+            NSColor.black.withAlphaComponent(0.3).setStroke()
+            let track = NSBezierPath(ovalIn: NSRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r)); track.lineWidth = 2; track.stroke()
+            NSColor.black.set()
+            let ring = NSBezierPath(); ring.appendArc(withCenter: c, radius: r, startAngle: 90, endAngle: 90 - 0.72 * 360, clockwise: true)
+            ring.lineWidth = 2; ring.lineCapStyle = .round; ring.stroke()
+            let hands = NSBezierPath(); hands.lineWidth = 1.5; hands.lineCapStyle = .round
+            hands.move(to: c); hands.line(to: NSPoint(x: c.x + 2.6, y: c.y + 1.6))
+            hands.move(to: c); hands.line(to: NSPoint(x: c.x - 3.9, y: c.y - 0.75)); hands.stroke()
+            return true
+        }
+        img.isTemplate = true
+        img.accessibilityDescription = "DeskTime"
+        return img
     }
 
     /// Abhi kya haal hai: "active", "break" (keyboard/mouse se door), ya "paused"
