@@ -37,7 +37,7 @@ let ignoredAppNames: Set<String> = [
 enum Settings {
     static var goalHours = 8.0
     static var idleMinutes = 2.0          // itne minute keyboard/mouse na chale to "away"
-    static var awayMinutes = 15.0         // isse lamba away ho to "Away" list me aata hai
+    static var awayMinutes = 5.0          // isse lamba away ho to "Away" list me aata hai (naam / topic de sakte ho)
     static var notifyGoal = true
     static var notifyDistraction = true
     static var distractionMinutes = 30.0
@@ -46,6 +46,14 @@ enum Settings {
     static var remindMinutes = 10.0       // meeting / task se itne minute pehle reminder
     static var scheduleTime = "10:00"     // roz is time pe aaj ka schedule
     static var notifySchedule = true
+    static var notifyGtaskNew = true      // Google Tasks me naya task aaye to alert
+    static var notifyGtaskDue = true      // due wale din yaad dilao
+    static var gtaskDueTime = "09:00"     // Google sirf date deta hai, isliye is time pe
+    static var gtaskSyncMinutes = 5.0     // kitni der me Google Tasks check kare
+    static var officeOn = true            // office hours ke bahar ka time "Personal" me
+    static var officeStart = "09:00"
+    static var officeEnd = "21:00"
+    static var officeDays: Set<Int> = [0, 1, 2, 3, 4, 5, 6]   // 0 = Sunday (JS getDay jaisa)
 
     static func load() {
         guard let data = try? Data(contentsOf: catsURL),
@@ -53,7 +61,7 @@ enum Settings {
         goalHours = (cfg["goal_hours"] as? Double) ?? goalHours
         let s = cfg["settings"] as? [String: Any] ?? [:]
         idleMinutes = max(1, (s["idle_minutes"] as? Double) ?? idleMinutes)
-        awayMinutes = max(5, (s["away_minutes"] as? Double) ?? awayMinutes)
+        awayMinutes = max(2, (s["away_minutes"] as? Double) ?? awayMinutes)
         notifyGoal = (s["notify_goal"] as? Bool) ?? notifyGoal
         notifyDistraction = (s["notify_distraction"] as? Bool) ?? notifyDistraction
         distractionMinutes = max(5, (s["distraction_minutes"] as? Double) ?? distractionMinutes)
@@ -62,7 +70,41 @@ enum Settings {
         remindMinutes = max(0, (s["remind_minutes"] as? Double) ?? remindMinutes)
         scheduleTime = (s["schedule_time"] as? String) ?? scheduleTime
         notifySchedule = (s["notify_schedule"] as? Bool) ?? notifySchedule
+        notifyGtaskNew = (s["notify_gtask_new"] as? Bool) ?? notifyGtaskNew
+        notifyGtaskDue = (s["notify_gtask_due"] as? Bool) ?? notifyGtaskDue
+        gtaskDueTime = (s["gtask_due_time"] as? String) ?? gtaskDueTime
+        gtaskSyncMinutes = min(60, max(1, (s["gtask_sync_minutes"] as? Double) ?? gtaskSyncMinutes))
+        officeOn = (s["office_on"] as? Bool) ?? officeOn
+        officeStart = (s["office_start"] as? String) ?? officeStart
+        officeEnd = (s["office_end"] as? String) ?? officeEnd
+        if let d = s["office_days"] as? [Int] { officeDays = Set(d.filter { (0...6).contains($0) }) }
     }
+
+    /// "HH:mm" -> din ki shuruaat se seconds
+    static func secs(_ hm: String) -> Double {
+        let p = hm.split(separator: ":").compactMap { Double($0) }
+        return p.count == 2 ? p[0] * 3600 + p[1] * 60 : 0
+    }
+
+    /// [s, e] me se kitna office hours ke andar hai (baaki Personal). Raat ki shift (21:00–06:00) bhi chalti hai.
+    static func officeSeconds(_ s: Double, _ e: Double) -> Double {
+        guard officeOn, e > s else { return max(0, e - s) }
+        let cal = Calendar.current
+        let os = secs(officeStart)
+        var oe = secs(officeEnd)
+        if oe <= os { oe += 86400 }
+        var total = 0.0
+        var day = cal.date(byAdding: .day, value: -1, to: cal.startOfDay(for: Date(timeIntervalSince1970: s)))!
+        while day.timeIntervalSince1970 < e {
+            if officeDays.contains(cal.component(.weekday, from: day) - 1) {
+                let base = day.timeIntervalSince1970
+                total += max(0, min(e, base + oe) - max(s, base + os))
+            }
+            day = cal.date(byAdding: .day, value: 1, to: day)!
+        }
+        return total
+    }
+    static func isOffice(_ t: Double) -> Bool { officeSeconds(t, t + 1) > 0 }
 }
 
 func notify(_ title: String, _ body: String, url: String? = nil, open: String? = nil) {
@@ -137,6 +179,10 @@ final class Store {
                 end   REAL
             );
             """, nil, nil, nil)
+        // Purane DB me ye columns nahi the — pehle se ho to ALTER chup-chaap fail ho jata hai
+        sqlite3_exec(db, "ALTER TABLE task ADD COLUMN project TEXT NOT NULL DEFAULT ''", nil, nil, nil)
+        sqlite3_exec(db, "ALTER TABLE task ADD COLUMN day TEXT", nil, nil, nil)
+        setupGoogleTables()
     }
 
     private func run(_ sql: String, _ args: [Any], each: ((OpaquePointer) -> Void)? = nil) {
@@ -193,6 +239,17 @@ final class Store {
     func setAwayLabel(_ id: Int64, _ label: String) {
         run("UPDATE away SET label=? WHERE id=?", [label, id])
     }
+    /// Break ka time / naam badlo (id 0 = naya break). Galat time ho to error message.
+    func saveAway(_ id: Int64, _ start: Double, _ end: Double, _ label: String) -> String? {
+        let now = Date().timeIntervalSince1970
+        guard start > 0, end > start else { return "The end time must be after the start time." }
+        guard end - start <= 86400 else { return "A break can’t be longer than a day." }
+        guard end <= now + 60 else { return "A break can’t end in the future." }
+        if id == 0 { run("INSERT INTO away(start,end,label) VALUES (?,?,?)", [start, end, label]) }
+        else { run("UPDATE away SET start=?, end=?, label=? WHERE id=?", [start, end, label, id]) }
+        return nil
+    }
+    func deleteAway(_ id: Int64) { run("DELETE FROM away WHERE id=?", [id]) }
     func awayRows(since: Double, until: Double) -> [[Any]] {
         var out: [[Any]] = []
         run("SELECT id,start,end,label FROM away WHERE end>=? AND start<? ORDER BY start", [since, until]) { st in
@@ -233,20 +290,44 @@ final class Store {
         return out
     }
 
-    // --- Tasks (DeskTime ke apne, time ke saath ya bina) ---
-    func addTask(_ title: String, due: Double?) {
-        run("INSERT INTO task(title,due,created) VALUES (?,?,?)", [title, due as Any, Date().timeIntervalSince1970])
+    // --- Tasks (DeskTime ke apne: project / General, kisi bhi din ke liye, time ke saath ya bina) ---
+    /// due = time wala task (timestamp). day = sirf date wala task ("yyyy-MM-dd").
+    func addTask(_ title: String, due: Double?, day: String?, project: String) {
+        run("INSERT INTO task(title,due,created,project,day) VALUES (?,?,?,?,?)",
+            [title, due as Any, Date().timeIntervalSince1970, project, day as Any])
+    }
+    /// Sab khule tasks (kisi bhi din ke) — Work me har project ke "kitne baaki, agla kaunsa"
+    func openTasks() -> [[String: Any]] {
+        var out: [[String: Any]] = []
+        run("SELECT id,title,due,day,project FROM task WHERE done=0 ORDER BY COALESCE(day, date(due,'unixepoch','localtime'), '9999'), due, id", []) { st in
+            out.append(["id": sqlite3_column_int64(st, 0), "title": col(st, 1),
+                        "due": sqlite3_column_type(st, 2) == SQLITE_NULL ? NSNull() : sqlite3_column_double(st, 2) as Any,
+                        "day": sqlite3_column_type(st, 3) == SQLITE_NULL ? NSNull() : col(st, 3) as Any, "project": col(st, 4)])
+        }
+        return out
     }
     func setTaskDone(_ id: Int64, _ done: Bool) { run("UPDATE task SET done=? WHERE id=?", [Int64(done ? 1 : 0), id]) }
     func deleteTask(_ id: Int64) { run("DELETE FROM task WHERE id=?", [id]) }
-    /// Is range ke time wale tasks + bina time wale khule tasks
+    /// Is range ke time wale + is range ke date wale tasks. Range me aaj ho to purane baaki (date wale) bhi.
+    /// Bina date/time wale purane tasks pehle jaise: jab tak pure na ho tab tak dikhte hain.
     func tasks(since: Double, until: Double) -> [[String: Any]] {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        let d0 = f.string(from: Date(timeIntervalSince1970: since)), d1 = f.string(from: Date(timeIntervalSince1970: until))
+        let now = Date().timeIntervalSince1970, today = f.string(from: Date())
+        let carry: Int64 = since <= now && now < until ? 1 : 0
         var out: [[String: Any]] = []
-        run("SELECT id,title,due,done FROM task WHERE (due>=? AND due<?) OR (due IS NULL AND (done=0 OR created>=?)) ORDER BY due IS NULL, due, id",
-            [since, until, since]) { st in
+        run("""
+            SELECT id,title,due,done,project,day FROM task
+            WHERE (due>=? AND due<?)
+               OR (due IS NULL AND day IS NOT NULL AND ((day>=? AND day<?) OR (?=1 AND day<? AND done=0)))
+               OR (due IS NULL AND day IS NULL AND (done=0 OR created>=?))
+            ORDER BY due IS NULL, due, day, id
+            """, [since, until, d0, d1, carry, today, since]) { st in
             out.append(["id": sqlite3_column_int64(st, 0), "title": col(st, 1),
                         "due": sqlite3_column_type(st, 2) == SQLITE_NULL ? NSNull() : sqlite3_column_double(st, 2) as Any,
-                        "done": sqlite3_column_int(st, 3) == 1])
+                        "done": sqlite3_column_int(st, 3) == 1, "project": col(st, 4),
+                        "day": sqlite3_column_type(st, 5) == SQLITE_NULL ? NSNull() : col(st, 5) as Any])
         }
         return out
     }
@@ -302,6 +383,167 @@ final class Store {
         }
         return out
     }
+}
+
+// MARK: - Google Tasks tables
+// Token DB me nahi rakhte — refresh token sirf Mac ki Keychain me ("refresh:<email>"), access token sirf memory me.
+
+struct GAccount { let email, userID, status, error: String; let lastSynced: Double; let fails: Int; let nextTry: Double }
+
+extension Store {
+    func setupGoogleTables() {
+        sqlite3_exec(db, """
+            CREATE TABLE IF NOT EXISTS gaccount (
+                email          TEXT PRIMARY KEY,
+                user_id        TEXT NOT NULL DEFAULT '',
+                last_synced_at REAL NOT NULL DEFAULT 0,
+                status         TEXT NOT NULL DEFAULT 'ok',   -- ok | offline | retry | reauth
+                error          TEXT NOT NULL DEFAULT '',
+                fails          INTEGER NOT NULL DEFAULT 0,
+                next_try       REAL NOT NULL DEFAULT 0
+            );
+            CREATE TABLE IF NOT EXISTS glist (
+                account TEXT NOT NULL,
+                list_id TEXT NOT NULL,
+                title   TEXT NOT NULL DEFAULT '',
+                cursor  TEXT,                                 -- agli baar ka updatedMin (RFC 3339)
+                PRIMARY KEY (account, list_id)
+            );
+            CREATE TABLE IF NOT EXISTS gtask (
+                id           INTEGER PRIMARY KEY,
+                account      TEXT NOT NULL,
+                list_id      TEXT NOT NULL,
+                google_id    TEXT NOT NULL,
+                title        TEXT NOT NULL,
+                notes        TEXT,
+                due          TEXT,                            -- "YYYY-MM-DD" (Google API time nahi deta)
+                status       TEXT NOT NULL,                   -- needsAction | completed
+                completed    REAL,
+                updated      TEXT NOT NULL,
+                link         TEXT,
+                first_seen   REAL NOT NULL,
+                notified_new INTEGER NOT NULL DEFAULT 0,
+                notified_due INTEGER NOT NULL DEFAULT 0,
+                UNIQUE (account, google_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_gtask_due ON gtask(due, status);
+            """, nil, nil, nil)
+    }
+
+    func gAccounts() -> [GAccount] {
+        var out: [GAccount] = []
+        run("SELECT email,user_id,status,error,last_synced_at,fails,next_try FROM gaccount ORDER BY rowid", []) { st in
+            out.append(GAccount(email: col(st, 0), userID: col(st, 1), status: col(st, 2), error: col(st, 3),
+                                lastSynced: sqlite3_column_double(st, 4), fails: Int(sqlite3_column_int(st, 5)),
+                                nextTry: sqlite3_column_double(st, 6)))
+        }
+        return out
+    }
+    func gAddAccount(_ email: String, userID: String) {
+        run("""
+            INSERT INTO gaccount(email,user_id) VALUES (?,?)
+            ON CONFLICT(email) DO UPDATE SET user_id=excluded.user_id, status='ok', error='', fails=0, next_try=0
+            """, [email, userID])
+    }
+    func gRemoveAccount(_ email: String) {
+        run("DELETE FROM gtask WHERE account=?", [email])
+        run("DELETE FROM glist WHERE account=?", [email])
+        run("DELETE FROM gaccount WHERE email=?", [email])
+    }
+    func gSetState(_ email: String, _ status: String, error: String = "", fails: Int = 0, nextTry: Double = 0, synced: Double? = nil) {
+        run("UPDATE gaccount SET status=?, error=?, fails=?, next_try=?, last_synced_at=COALESCE(?, last_synced_at) WHERE email=?",
+            [status, error, Int64(fails), nextTry, synced as Any, email])
+    }
+
+    /// list_id -> cursor ("" = is list ka pehla sync abhi nahi hua)
+    func gCursors(_ email: String) -> [String: String] {
+        var out: [String: String] = [:]
+        run("SELECT list_id, cursor FROM glist WHERE account=?", [email]) { st in out[col(st, 0)] = col(st, 1) }
+        return out
+    }
+    func gSaveList(_ email: String, _ id: String, title: String, cursor: String) {
+        run("""
+            INSERT INTO glist(account,list_id,title,cursor) VALUES (?,?,?,?)
+            ON CONFLICT(account,list_id) DO UPDATE SET title=excluded.title, cursor=excluded.cursor
+            """, [email, id, title, cursor])
+    }
+    func gDropList(_ email: String, _ id: String) {
+        run("DELETE FROM gtask WHERE account=? AND list_id=?", [email, id])
+        run("DELETE FROM glist WHERE account=? AND list_id=?", [email, id])
+    }
+
+    /// Google ka ek task DB me merge. (account, google_id) unique hai, isliye duplicate kabhi nahi banta;
+    /// purana jawab naye ko overwrite nahi karta (updated compare). Return: true agar task pehli baar dikha.
+    @discardableResult
+    func gUpsert(_ email: String, list: String, _ t: [String: Any], silent: Bool) -> Bool {
+        guard let gid = t["id"] as? String else { return false }
+        if t["deleted"] as? Bool == true {
+            run("DELETE FROM gtask WHERE account=? AND google_id=?", [email, gid])
+            return false
+        }
+        let title = (t["title"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else { return false }   // Google ke khali tasks
+        var exists = false
+        run("SELECT 1 FROM gtask WHERE account=? AND google_id=?", [email, gid]) { _ in exists = true }
+        let status = t["status"] as? String ?? "needsAction"
+        run("""
+            INSERT INTO gtask(account,list_id,google_id,title,notes,due,status,completed,updated,link,first_seen,notified_new)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+            ON CONFLICT(account,google_id) DO UPDATE SET
+                list_id=excluded.list_id, title=excluded.title, notes=excluded.notes, status=excluded.status,
+                completed=excluded.completed, updated=excluded.updated, link=excluded.link, due=excluded.due,
+                notified_due = CASE WHEN excluded.due IS gtask.due THEN gtask.notified_due ELSE 0 END
+            WHERE excluded.updated >= gtask.updated
+            """, [email, list, gid, String(title.prefix(500)), (t["notes"] as? String).map { String($0.prefix(2000)) } as Any,
+                  (t["due"] as? String).map { String($0.prefix(10)) } as Any, status,
+                  (t["completed"] as? String).flatMap(rfc3339) as Any, t["updated"] as? String ?? "",
+                  t["webViewLink"] as? String as Any, Date().timeIntervalSince1970,
+                  Int64(silent || status == "completed" ? 1 : 0)])
+        return !exists
+    }
+
+    /// Naye aaye tasks jinki notification abhi nahi gayi — aur unhe "announced" mark kar do
+    func gTakeUnannounced() -> [(title: String, account: String, due: String)] {
+        var out: [(String, String, String)] = []
+        run("SELECT title,account,COALESCE(due,'') FROM gtask WHERE notified_new=0 AND status='needsAction' ORDER BY id", []) { st in
+            out.append((col(st, 0), col(st, 1), col(st, 2)))
+        }
+        run("UPDATE gtask SET notified_new=1 WHERE notified_new=0", [])
+        return out
+    }
+    /// Aaj due wale khule tasks jinka reminder abhi nahi gaya — aur unhe mark kar do
+    func gTakeDue(_ day: String) -> [(title: String, account: String)] {
+        var out: [(String, String)] = []
+        run("SELECT title,account FROM gtask WHERE due=? AND status='needsAction' AND notified_due=0 ORDER BY id", [day]) { st in
+            out.append((col(st, 0), col(st, 1)))
+        }
+        run("UPDATE gtask SET notified_due=1 WHERE due=? AND status='needsAction' AND notified_due=0", [day])
+        return out
+    }
+
+    /// Dashboard ke liye: sab khule tasks + `completedSince` ke baad pure hue
+    func gTasks(completedSince: Double) -> [[String: Any]] {
+        var out: [[String: Any]] = []
+        run("""
+            SELECT t.account, COALESCE(l.title,''), t.list_id, t.google_id, t.title, t.due, t.status, t.link, COALESCE(t.notes,'')
+            FROM gtask t LEFT JOIN glist l ON l.account=t.account AND l.list_id=t.list_id
+            WHERE t.status='needsAction' OR t.completed>=? ORDER BY t.due IS NULL, t.due, t.id
+            """, [completedSince]) { st in
+            out.append(["account": col(st, 0), "list": col(st, 1), "listId": col(st, 2), "id": col(st, 3), "title": col(st, 4),
+                        "due": sqlite3_column_type(st, 5) == SQLITE_NULL ? NSNull() : col(st, 5) as Any,
+                        "done": col(st, 6) == "completed",
+                        "link": sqlite3_column_type(st, 7) == SQLITE_NULL ? NSNull() : col(st, 7) as Any, "notes": col(st, 8)])
+        }
+        return out
+    }
+}
+
+func rfc3339(_ s: String) -> Double? {
+    let f = ISO8601DateFormatter()
+    f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    if let d = f.date(from: s) { return d.timeIntervalSince1970 }
+    f.formatOptions = [.withInternetDateTime]
+    return f.date(from: s)?.timeIntervalSince1970
 }
 
 func col(_ st: OpaquePointer, _ i: Int32) -> String {
@@ -395,7 +637,9 @@ final class Tracker {
     var paused = UserDefaults.standard.bool(forKey: "paused") {
         didSet { UserDefaults.standard.set(paused, forKey: "paused"); lastKey = nil; lastActive = 0 }
     }
-    private var lastId: Int64 = 0, lastKey: [String]?, lastEnd: Double = 0
+    private var lastId: Int64 = 0, lastKey: [String]?, lastEnd: Double = 0, lastStart: Double = 0
+    /// Aakhri baar keyboard/mouse kab chala — away yahin se shuru hota hai (idle wale 2 min bhi away me)
+    private(set) var lastInput: Double = 0
     private var scripts: [String: NSAppleScript] = [:]
     private(set) var lastActive: Double = 0
     /// Abhi wali activity (notifications ke liye)
@@ -408,12 +652,19 @@ final class Tracker {
     func tick() {
         let now = Date().timeIntervalSince1970
         guard !paused, let a = current() else { lastKey = nil; last = nil; return }
-        // Lamba gap (idle / screen lock / sleep) = "Away" period
-        if lastActive > 0 && now - lastActive >= Settings.awayMinutes * 60 {
-            store.addAway(lastActive + POLL, now)
-            onReturn?(now - lastActive)
+        // Gap (idle / screen lock / sleep) = "Away" period, user ke jaane ke time se
+        if lastActive > 0 {
+            let left = min(lastInput > 0 ? lastInput : lastActive + POLL, lastActive + POLL)
+            if now - left >= Settings.awayMinutes * 60 {
+                // idle wait wala time kaam me gina gaya tha — wo hata do
+                if lastId > 0 && lastStart < left && lastEnd + POLL > left { store.setEnd(lastId, left) }
+                lastKey = nil
+                store.addAway(left, now)
+                onReturn?(now - left)
+            }
         }
         lastActive = now
+        lastInput = now - CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: CGEventType(rawValue: ~0)!)
         last = a
         let key = [a.app, a.title, a.url, a.domain]
         if key == lastKey && now - lastEnd <= MERGE_GAP {
@@ -421,6 +672,7 @@ final class Tracker {
         } else {
             lastId = store.insert(now, now + POLL, a)
             lastKey = key
+            lastStart = now
         }
         lastEnd = now
     }
@@ -683,25 +935,59 @@ enum Keychain {
 }
 
 final class GoogleTasks {
+    private let store: Store
     private let cfgURL = supportDir.appendingPathComponent("google.json")
     private(set) var clientID = ""
-    private(set) var accounts: [String] = []
+    // Keychain sirf zaroorat pe aur ek hi baar padho — har padhai pe macOS password popup dikha sakta hai
+    private var hasSecret = false
+    private var secretMemo: String?
+    private var refreshMemo: [String: String] = [:]
     private var access: [String: (token: String, exp: Double)] = [:]
-    private(set) var cache: [[String: Any]] = []
-    private(set) var lastError: String?
     private var listener: NWListener?
+    private var syncing = Set<String>()
+    private let monitor = NWPathMonitor()
+    private(set) var online = true
 
-    init() { load() }
+    init(store: Store) {
+        self.store = store
+        load()
+        // Internet wapas aaye to turant sync
+        monitor.pathUpdateHandler = { [weak self] path in
+            guard let self else { return }
+            let was = self.online
+            self.online = path.status == .satisfied
+            if !was && self.online { self.refresh(force: true) { _ in } }
+        }
+        monitor.start(queue: .main)
+    }
 
-    var configured: Bool { !clientID.isEmpty && Keychain.get("client-secret") != nil }
+    var configured: Bool { !clientID.isEmpty && hasSecret }
+
+    private func secret() -> String? {
+        if secretMemo == nil { secretMemo = Keychain.get("client-secret") }
+        return secretMemo
+    }
+    private func refreshToken(_ email: String) -> String? {
+        if refreshMemo[email] == nil { refreshMemo[email] = Keychain.get("refresh:" + email) }
+        return refreshMemo[email]
+    }
+    var accounts: [String] { store.gAccounts().map(\.email) }
+    /// Sab khule tasks + pichhle 3 din me pure hue (dashboard aur subah ka schedule)
+    var cache: [[String: Any]] { store.gTasks(completedSince: Date().timeIntervalSince1970 - 3 * 86400) }
 
     private func load() {
         guard let d = try? Data(contentsOf: cfgURL), let j = try? JSONSerialization.jsonObject(with: d) as? [String: Any] else { return }
         clientID = j["client_id"] as? String ?? ""
-        accounts = j["accounts"] as? [String] ?? []
+        hasSecret = j["has_secret"] as? Bool ?? !clientID.isEmpty   // purani file me ye flag nahi tha
+        // Purana version accounts google.json me rakhta tha — ab DB me
+        if let old = j["accounts"] as? [String], !old.isEmpty {
+            let have = Set(accounts)
+            for e in old where !have.contains(e) { store.gAddAccount(e, userID: "") }
+            save()
+        }
     }
     private func save() {
-        if let d = try? JSONSerialization.data(withJSONObject: ["client_id": clientID, "accounts": accounts], options: .prettyPrinted) {
+        if let d = try? JSONSerialization.data(withJSONObject: ["client_id": clientID, "has_secret": hasSecret] as [String: Any], options: .prettyPrinted) {
             try? d.write(to: cfgURL)
             chmod(cfgURL.path, 0o600)
         }
@@ -710,12 +996,24 @@ final class GoogleTasks {
     func setClient(id: String, secret: String) {
         clientID = id.trimmingCharacters(in: .whitespacesAndNewlines)
         let s = secret.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !s.isEmpty { Keychain.set(s, "client-secret") }
+        if !s.isEmpty { Keychain.set(s, "client-secret"); secretMemo = s; hasSecret = true }
         save()
     }
 
     var info: [String: Any] {
-        ["configured": configured, "clientId": clientID, "accounts": accounts, "error": lastError ?? NSNull()]
+        let accs = store.gAccounts()
+        let errs = accs.compactMap { a -> String? in
+            switch a.status {
+            case "reauth": return "\(a.email): access expired or was removed — click Reconnect in Settings."
+            case "retry": return "\(a.email): \(a.error) Will try again soon."
+            default: return nil
+            }
+        }
+        let error: Any = !online && !accs.isEmpty ? "Offline — showing saved tasks. They’ll sync when you’re back online."
+                       : errs.isEmpty ? NSNull() as Any : errs.joined(separator: "\n")
+        return ["configured": configured, "clientId": clientID, "accounts": accs.map(\.email), "online": online, "error": error,
+                "details": accs.map { ["email": $0.email, "status": $0.status, "error": $0.error,
+                                       "lastSynced": $0.lastSynced > 0 ? $0.lastSynced : NSNull()] as [String: Any] }]
     }
 
     // --- HTTP ---
@@ -735,7 +1033,7 @@ final class GoogleTasks {
             req.httpBody = try? JSONSerialization.data(withJSONObject: json)
         }
         URLSession.shared.dataTask(with: req) { data, resp, _ in
-            let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
+            let code = (resp as? HTTPURLResponse)?.statusCode ?? 0   // 0 = network nahi mila
             let body = data.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] } ?? [:]
             DispatchQueue.main.async { cb(code, body) }
         }.resume()
@@ -744,10 +1042,16 @@ final class GoogleTasks {
     private static func b64url(_ d: Data) -> String {
         d.base64EncodedString().replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "=", with: "")
     }
+    private static func jwtPayload(_ jwt: String) -> [String: Any] {
+        let parts = jwt.split(separator: ".")
+        var p = parts.count > 1 ? String(parts[1]).replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/") : ""
+        while p.count % 4 != 0 { p += "=" }
+        return Data(base64Encoded: p).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] } ?? [:]
+    }
 
     // --- Connect: browser me Google login, jawab 127.0.0.1 pe aata hai ---
     func connect(_ done: @escaping (String?) -> Void) {
-        guard configured, let secret = Keychain.get("client-secret") else { return done("Add the Client ID and secret first.") }
+        guard configured, let secret = secret() else { return done("Add the Client ID and secret first.") }
         listener?.cancel()
         var bytes = [UInt8](repeating: 0, count: 48)
         _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
@@ -794,15 +1098,20 @@ final class GoogleTasks {
                     guard status == 200, let refresh = body["refresh_token"] as? String, let idt = body["id_token"] as? String else {
                         return finish((body["error_description"] as? String) ?? "Google didn’t return a sign-in token.")
                     }
-                    let parts = idt.split(separator: ".")
-                    var payload = parts.count > 1 ? String(parts[1]).replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/") : ""
-                    while payload.count % 4 != 0 { payload += "=" }
-                    let email = (Data(base64Encoded: payload).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] })?["email"] as? String ?? "Google account"
+                    // Google ke page pe "Tasks" wala box untick kiya ho to token bekaar hai
+                    guard (body["scope"] as? String ?? "").contains("auth/tasks") else {
+                        self.call(URL(string: "https://oauth2.googleapis.com/revoke")!, method: "POST", form: ["token": refresh]) { _, _ in }
+                        return finish("Tick the “View and edit your tasks” box on Google’s page, then try again.")
+                    }
+                    let claims = GoogleTasks.jwtPayload(idt)
+                    let email = claims["email"] as? String ?? "Google account"
                     Keychain.set(refresh, "refresh:" + email)
-                    if let tok = body["access_token"] as? String { self.access[email] = (tok, Date().timeIntervalSince1970 + 3000) }
-                    if !self.accounts.contains(email) { self.accounts.append(email) }
-                    self.save()
-                    self.refresh { _ in finish(nil) }
+                    self.refreshMemo[email] = refresh
+                    if let tok = body["access_token"] as? String {
+                        self.access[email] = (tok, Date().timeIntervalSince1970 + ((body["expires_in"] as? Double) ?? 3600))
+                    }
+                    self.store.gAddAccount(email, userID: claims["sub"] as? String ?? "")
+                    self.sync(email, force: true) { finish(nil) }
                 }
             }
         }
@@ -811,82 +1120,224 @@ final class GoogleTasks {
     }
 
     func disconnect(_ email: String) {
-        if let r = Keychain.get("refresh:" + email) {
+        if let r = refreshToken(email) {
             call(URL(string: "https://oauth2.googleapis.com/revoke")!, method: "POST", form: ["token": r]) { _, _ in }
         }
         Keychain.delete("refresh:" + email)
+        refreshMemo[email] = nil
         access[email] = nil
-        accounts.removeAll { $0 == email }
-        cache.removeAll { $0["account"] as? String == email }
-        save()
+        store.gRemoveAccount(email)
     }
 
-    private func token(_ email: String, _ cb: @escaping (String?) -> Void) {
-        if let a = access[email], a.exp > Date().timeIntervalSince1970 + 60 { return cb(a.token) }
-        guard let r = Keychain.get("refresh:" + email), let secret = Keychain.get("client-secret") else { return cb(nil) }
+    // --- Token + API call (401 pe ek baar naya token lekar dobara) ---
+    private enum Result { case ok([String: Any]), offline, reauth, retry(String) }
+
+    private func token(_ email: String, force: Bool, _ cb: @escaping (Result) -> Void) {
+        if !force, let a = access[email], a.exp > Date().timeIntervalSince1970 + 120 { return cb(.ok(["token": a.token])) }
+        guard let r = refreshToken(email), let secret = secret() else { return cb(.reauth) }
         call(URL(string: "https://oauth2.googleapis.com/token")!, method: "POST", form: [
             "client_id": clientID, "client_secret": secret, "refresh_token": r, "grant_type": "refresh_token"]) { status, body in
-            guard status == 200, let tok = body["access_token"] as? String else {
-                self.lastError = "\(email): sign-in expired — connect it again in Settings."
-                return cb(nil)
+            if status == 200, let tok = body["access_token"] as? String {
+                self.access[email] = (tok, Date().timeIntervalSince1970 + ((body["expires_in"] as? Double) ?? 3600))
+                return cb(.ok(["token": tok]))
             }
-            self.access[email] = (tok, Date().timeIntervalSince1970 + ((body["expires_in"] as? Double) ?? 3600))
-            cb(tok)
+            self.access[email] = nil
+            if status == 0 { return cb(.offline) }
+            // invalid_grant = user ne access hata diya, password badla, ya token expire (7 din wala "Testing" app)
+            if body["error"] as? String == "invalid_grant" { return cb(.reauth) }
+            cb(.retry((body["error_description"] as? String) ?? "Google sign-in failed (\(status))."))
         }
     }
 
-    /// Sab accounts ki sab lists ke tasks (khule + pichhle 3 din me pure hue)
-    func refresh(_ done: @escaping ([[String: Any]]) -> Void) {
-        guard configured, !accounts.isEmpty else { cache = []; return done([]) }
-        var all: [[String: Any]] = [], pending = accounts.count
-        lastError = nil
-        let f = ISO8601DateFormatter()
-        let since = f.string(from: Date().addingTimeInterval(-3 * 86400))
-        for email in accounts {
-            token(email) { tok in
-                guard let tok else { pending -= 1; if pending == 0 { self.cache = all; done(all) }; return }
-                self.call(URL(string: "https://tasks.googleapis.com/tasks/v1/users/@me/lists?maxResults=50")!, bearer: tok) { _, body in
-                    let lists = body["items"] as? [[String: Any]] ?? []
-                    var left = lists.count
-                    if left == 0 { pending -= 1; if pending == 0 { self.cache = all; done(all) } }
-                    for list in lists {
-                        let lid = list["id"] as? String ?? ""
-                        var c = URLComponents(string: "https://tasks.googleapis.com/tasks/v1/lists/\(lid)/tasks")!
-                        c.queryItems = [.init(name: "showCompleted", value: "true"), .init(name: "showHidden", value: "true"),
-                                        .init(name: "completedMin", value: since), .init(name: "maxResults", value: "100")]
-                        let openURL = c.url!
-                        c.queryItems = [.init(name: "showCompleted", value: "false"), .init(name: "maxResults", value: "100")]
-                        let pendingURL = c.url!
-                        var seen = Set<String>(), got = 0
-                        for u in [pendingURL, openURL] {
-                            self.call(u, bearer: tok) { _, b in
-                                for t in b["items"] as? [[String: Any]] ?? [] {
-                                    guard let id = t["id"] as? String, !seen.contains(id), let title = t["title"] as? String, !title.isEmpty else { continue }
-                                    seen.insert(id)
-                                    all.append(["account": email, "list": list["title"] as? String ?? "", "listId": lid, "id": id, "title": title,
-                                                "due": (t["due"] as? String).map { String($0.prefix(10)) } ?? NSNull(),
-                                                "done": t["status"] as? String == "completed", "link": t["webViewLink"] as? String ?? NSNull()])
-                                }
-                                got += 1
-                                if got == 2 {
-                                    left -= 1
-                                    if left == 0 { pending -= 1; if pending == 0 { self.cache = all; done(all) } }
-                                }
-                            }
-                        }
-                    }
+    private func api(_ email: String, _ url: URL, method: String = "GET", json: [String: Any]? = nil, retried: Bool = false,
+                     _ cb: @escaping (Result) -> Void) {
+        token(email, force: retried) { auth in
+            guard case .ok(let t) = auth, let tok = t["token"] as? String else { return cb(auth) }
+            self.call(url, method: method, json: json, bearer: tok) { status, body in
+                let err = body["error"] as? [String: Any] ?? [:]
+                let reason = ((err["errors"] as? [[String: Any]])?.first?["reason"] as? String ?? "") + " " + (err["status"] as? String ?? "")
+                switch status {
+                case 200..<300: cb(.ok(body))
+                case 0: cb(.offline)
+                case 401 where !retried: self.api(email, url, method: method, json: json, retried: true, cb)
+                case 401: cb(.reauth)
+                case 403 where reason.contains("insufficientPermissions") || (err["message"] as? String ?? "").contains("insufficient authentication scopes"):
+                    cb(.reauth)
+                case 429:
+                    cb(.retry("Google is rate-limiting requests."))
+                case 403 where reason.lowercased().contains("ratelimit"):
+                    cb(.retry("Google is rate-limiting requests."))
+                case 500...:
+                    cb(.retry("Google Tasks is having trouble (\(status))."))
+                default:
+                    cb(.retry((err["message"] as? String).map { String($0.prefix(160)) } ?? "Google Tasks error \(status)."))
                 }
             }
         }
     }
 
-    func setDone(account: String, list: String, id: String, done: Bool, _ cb: @escaping () -> Void) {
-        token(account) { tok in
-            guard let tok, let url = URL(string: "https://tasks.googleapis.com/tasks/v1/lists/\(list)/tasks/\(id)") else { return cb() }
-            self.call(url, method: "PATCH", json: done ? ["status": "completed"] : ["status": "needsAction", "completed": NSNull()], bearer: tok) { _, _ in
-                if let i = self.cache.firstIndex(where: { $0["id"] as? String == id }) { self.cache[i]["done"] = done }
-                cb()
+    /// nextPageToken ke saath saare pages
+    private func pages(_ email: String, _ base: URLComponents, pageToken: String? = nil, items: [[String: Any]] = [],
+                       _ cb: @escaping (Result?, [[String: Any]]) -> Void) {
+        var c = base
+        if let pageToken { c.queryItems = (c.queryItems ?? []) + [.init(name: "pageToken", value: pageToken)] }
+        api(email, c.url!) { r in
+            guard case .ok(let body) = r else { return cb(r, items) }
+            let all = items + (body["items"] as? [[String: Any]] ?? [])
+            if let next = body["nextPageToken"] as? String, !next.isEmpty, all.count < 5000 {
+                self.pages(email, base, pageToken: next, items: all, cb)
+            } else {
+                cb(nil, all)
             }
+        }
+    }
+
+    // --- Sync engine ---
+
+    /// Sab accounts sync karo. force = abhi turant (interval aur retry-wait dono chhod ke).
+    func refresh(force: Bool = false, _ done: @escaping ([[String: Any]]) -> Void) {
+        let emails = configured ? accounts : []
+        guard !emails.isEmpty else { return done(cache) }
+        var left = emails.count
+        for e in emails { sync(e, force: force) { left -= 1; if left == 0 { done(self.cache) } } }
+    }
+
+    /// Ek account: lists → har list ke badle hue tasks (updatedMin) → DB me merge → naye tasks ki notification
+    private func sync(_ email: String, force: Bool, _ done: @escaping () -> Void) {
+        guard let acc = store.gAccounts().first(where: { $0.email == email }), !syncing.contains(email) else { return done() }
+        let now = Date().timeIntervalSince1970
+        if acc.status == "reauth" && !force { return done() }
+        if !force && acc.nextTry > now { return done() }                                       // retry ka wait
+        if !force && acc.status == "ok" && now - acc.lastSynced < Settings.gtaskSyncMinutes * 60 - 5 { return done() }
+        guard online else {
+            if acc.status != "reauth" { store.gSetState(email, "offline", fails: acc.fails, nextTry: acc.nextTry) }
+            return done()
+        }
+        syncing.insert(email)
+        // 2 min peeche ka cursor: Mac/Google ki ghadi ka farq aur sync ke beech badle tasks na chhootein
+        let f = ISO8601DateFormatter()
+        let cursor = f.string(from: Date(timeIntervalSince1970: now - 120))
+        let finish: (Result?) -> Void = { r in
+            self.syncing.remove(email)
+            switch r {
+            case .offline:
+                self.store.gSetState(email, "offline", fails: acc.fails, nextTry: 0)
+            case .reauth:
+                if acc.status != "reauth" {
+                    notify("Google Tasks disconnected", "\(email): access expired or was removed. Open Settings → Google Tasks → Reconnect.", open: "settings")
+                }
+                self.access[email] = nil
+                self.store.gSetState(email, "reauth", error: "Access expired or was removed.")
+            case .retry(let msg):
+                // 1, 2, 4, 8 … minute, zyada se zyada 1 ghanta
+                let fails = acc.fails + 1
+                let wait = min(3600, 60 * pow(2, Double(min(fails - 1, 6)))) + Double.random(in: 0...20)
+                self.store.gSetState(email, "retry", error: msg, fails: fails, nextTry: now + wait)
+            case .ok, nil:
+                self.store.gSetState(email, "ok", synced: Date().timeIntervalSince1970)
+                self.announceNew()
+            }
+            done()
+        }
+        var lists = URLComponents(string: "https://tasks.googleapis.com/tasks/v1/users/@me/lists")!
+        lists.queryItems = [.init(name: "maxResults", value: "100")]
+        pages(email, lists) { err, items in
+            if let err { return finish(err) }
+            let known = self.store.gCursors(email)
+            let ids = Set(items.compactMap { $0["id"] as? String })
+            for gone in known.keys where !ids.contains(gone) { self.store.gDropList(email, gone) }   // list Google pe delete hui
+            self.syncLists(email, items[...], known, cursor, finish)
+        }
+    }
+
+    private func syncLists(_ email: String, _ lists: ArraySlice<[String: Any]>, _ known: [String: String], _ cursor: String,
+                           _ done: @escaping (Result?) -> Void) {
+        guard let list = lists.first else { return done(nil) }
+        guard let lid = list["id"] as? String,
+              let path = lid.addingPercentEncoding(withAllowedCharacters: .alphanumerics.union(CharacterSet(charactersIn: "-_"))),
+              let base = URLComponents(string: "https://tasks.googleapis.com/tasks/v1/lists/\(path)/tasks") else {
+            return syncLists(email, lists.dropFirst(), known, cursor, done)
+        }
+        let item = { (k: String, v: String) in URLQueryItem(name: k, value: v) }
+        let since = known[lid].flatMap { $0.isEmpty ? nil : $0 }
+        let passes: [[URLQueryItem]] = since.map {
+            // Incremental: sirf cursor ke baad badle — pure hue, chhupe aur delete hue bhi, taaki DB sahi rahe
+            [[item("updatedMin", $0), item("showCompleted", "true"), item("showHidden", "true"), item("showDeleted", "true"), item("maxResults", "100")]]
+        } ?? [
+            // Pehli baar: saare khule tasks + pichhle 3 din me pure hue
+            [item("showCompleted", "false"), item("maxResults", "100")],
+            [item("showCompleted", "true"), item("showHidden", "true"), item("maxResults", "100"),
+             item("completedMin", ISO8601DateFormatter().string(from: Date().addingTimeInterval(-3 * 86400)))],
+        ]
+        fetchPasses(email, base, passes[...], []) { err, tasks in
+            if let err { return done(err) }
+            // Pehli baar wale tasks chup-chaap import (purane tasks pe notifications ki baarish nahi)
+            for t in tasks { self.store.gUpsert(email, list: lid, t, silent: since == nil) }
+            self.store.gSaveList(email, lid, title: list["title"] as? String ?? "", cursor: cursor)
+            self.syncLists(email, lists.dropFirst(), known, cursor, done)
+        }
+    }
+
+    private func fetchPasses(_ email: String, _ base: URLComponents, _ passes: ArraySlice<[URLQueryItem]>, _ got: [[String: Any]],
+                             _ done: @escaping (Result?, [[String: Any]]) -> Void) {
+        guard let q = passes.first else { return done(nil, got) }
+        var c = base
+        c.queryItems = q
+        pages(email, c) { err, items in
+            if let err { return done(err, got) }
+            self.fetchPasses(email, base, passes.dropFirst(), got + items, done)
+        }
+    }
+
+    // --- Notifications ---
+
+    private func announceNew() {
+        let fresh = store.gTakeUnannounced()
+        guard !fresh.isEmpty, Settings.notifyGtaskNew else { return }
+        let multi = accounts.count > 1
+        if fresh.count <= 3 {
+            for t in fresh {
+                let bits = [t.due.isEmpty ? nil : "Due \(GoogleTasks.prettyDay(t.due))", multi ? t.account : nil].compactMap { $0 }
+                notify("New task: \(t.title)", bits.isEmpty ? "From Google Tasks" : bits.joined(separator: " · "), open: "agenda")
+            }
+        } else {
+            notify("\(fresh.count) new Google tasks", fresh.prefix(4).map { "☐ \($0.title)" }.joined(separator: "\n"), open: "agenda")
+        }
+    }
+
+    /// Google Tasks API sirf date deta hai, time nahi — isliye due wale din Settings.gtaskDueTime pe ek baar yaad dilao
+    func checkDue() {
+        guard Settings.notifyGtaskDue else { return }
+        let parts = Settings.gtaskDueTime.split(separator: ":").compactMap { Int($0) }
+        let c = Calendar.current.dateComponents([.hour, .minute], from: Date())
+        guard parts.count == 2, (c.hour ?? 0) * 60 + (c.minute ?? 0) >= parts[0] * 60 + parts[1] else { return }
+        let df = DateFormatter()
+        df.dateFormat = "yyyy-MM-dd"
+        let due = store.gTakeDue(df.string(from: Date()))
+        guard !due.isEmpty else { return }
+        if due.count <= 3 {
+            for t in due { notify("Due today: \(t.title)", accounts.count > 1 ? "Google Tasks · \(t.account)" : "Google Tasks", open: "agenda") }
+        } else {
+            notify("\(due.count) Google tasks due today", due.prefix(4).map { "☐ \($0.title)" }.joined(separator: "\n"), open: "agenda")
+        }
+    }
+
+    private static func prettyDay(_ ymd: String) -> String {
+        let p = DateFormatter()
+        p.dateFormat = "yyyy-MM-dd"
+        guard let d = p.date(from: ymd) else { return ymd }
+        if Calendar.current.isDateInToday(d) { return "today" }
+        if Calendar.current.isDateInTomorrow(d) { return "tomorrow" }
+        let f = DateFormatter()
+        f.dateFormat = "EEE, d MMM"
+        return f.string(from: d)
+    }
+
+    func setDone(account: String, list: String, id: String, done: Bool, _ cb: @escaping () -> Void) {
+        guard let url = URL(string: "https://tasks.googleapis.com/tasks/v1/lists/\(list)/tasks/\(id)") else { return cb() }
+        api(account, url, method: "PATCH", json: done ? ["status": "completed"] : ["status": "needsAction", "completed": NSNull()]) { r in
+            if case .ok(let task) = r { self.store.gUpsert(account, list: list, task, silent: true) }
+            cb()
         }
     }
 }
@@ -926,6 +1377,8 @@ final class Dashboard: NSObject, WKScriptMessageHandlerWithReply, WKNavigationDe
             w.setFrameAutosaveName("Dashboard")
             window = w
             reload()
+        } else if window?.isVisible == false {
+            reload()   // band window dobara khuli — disk se naya UI lo (install.sh ke baad purana page na dikhe)
         } else {
             web.evaluateJavaScript("window.refresh && refresh()")
             if let v = pendingView { web.evaluateJavaScript("window.goView && goView('\(v)')"); pendingView = nil }
@@ -981,11 +1434,11 @@ final class Dashboard: NSObject, WKScriptMessageHandlerWithReply, WKNavigationDe
             let events = agenda.eventsJSON(s, e), tasks = store.tasks(since: a, until: b), access = agenda.access
             agenda.reminders(s, e) { rem in
                 let send = { (g: [[String: Any]]) in
-                    replyHandler(self.json(["access": access, "events": events, "reminders": rem, "tasks": tasks,
+                    replyHandler(self.json(["access": access, "events": events, "reminders": rem, "tasks": tasks, "projects": self.store.recentProjects(20), "openTasks": self.store.openTasks(),
                                             "google": self.google.info, "gtasks": g]), nil)
                 }
                 // Google Tasks: cache turant, aur "fresh" maanga ho to dobara lao
-                if (body["fresh"] as? Bool) == true { self.google.refresh(send) } else { send(self.google.cache) }
+                if (body["fresh"] as? Bool) == true { self.google.refresh(force: true, send) } else { send(self.google.cache) }
             }
         case "googleInfo":
             replyHandler(json(google.info), nil)
@@ -1013,7 +1466,9 @@ final class Dashboard: NSObject, WKScriptMessageHandlerWithReply, WKNavigationDe
             replyHandler("ok", nil)
         case "addTask":
             let title = (body["title"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            if !title.isEmpty { store.addTask(String(title.prefix(200)), due: body["due"] as? Double) }
+            let project = (body["project"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            let day = (body["day"] as? String).flatMap { $0.range(of: #"^\d{4}-\d{2}-\d{2}$"#, options: .regularExpression) != nil ? $0 : nil }
+            if !title.isEmpty { store.addTask(String(title.prefix(200)), due: body["due"] as? Double, day: day, project: String(project.prefix(60))) }
             replyHandler("ok", nil)
         case "taskDone":
             store.setTaskDone((body["id"] as? NSNumber)?.int64Value ?? 0, body["done"] as? Bool ?? true)
@@ -1022,7 +1477,15 @@ final class Dashboard: NSObject, WKScriptMessageHandlerWithReply, WKNavigationDe
             store.deleteTask((body["id"] as? NSNumber)?.int64Value ?? 0)
             replyHandler("ok", nil)
         case "setAwayLabel":
-            store.setAwayLabel((body["id"] as? NSNumber)?.int64Value ?? 0, String((body["label"] as? String ?? "").prefix(40)))
+            store.setAwayLabel((body["id"] as? NSNumber)?.int64Value ?? 0, String((body["label"] as? String ?? "").prefix(100)))
+            replyHandler("ok", nil)
+        case "saveAway":  // break edit / naya break: {id (0 = naya), start, end, label}
+            let label = (body["label"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            let err = store.saveAway((body["id"] as? NSNumber)?.int64Value ?? 0, (body["start"] as? NSNumber)?.doubleValue ?? 0,
+                                     (body["end"] as? NSNumber)?.doubleValue ?? 0, String(label.prefix(100)))
+            replyHandler(json(["error": err.map { $0 as Any } ?? NSNull()]), nil)
+        case "deleteAway":
+            store.deleteAway((body["id"] as? NSNumber)?.int64Value ?? 0)
             replyHandler("ok", nil)
         case "projectStart":
             let name = (body["name"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1086,13 +1549,16 @@ final class Dashboard: NSObject, WKScriptMessageHandlerWithReply, WKNavigationDe
         if let g = body["goal_hours"] as? Double, g > 0, g <= 16 { cfg["goal_hours"] = g }
         if let s = body["settings"] as? [String: Any] {
             var cur = cfg["settings"] as? [String: Any] ?? [:]
-            if let t = s["schedule_time"] as? String, t.range(of: #"^\d{1,2}:\d{2}$"#, options: .regularExpression) != nil { cur["schedule_time"] = t }
-            for k in ["idle_minutes", "away_minutes", "distraction_minutes", "retention_days", "remind_minutes"] {
+            for k in ["schedule_time", "gtask_due_time", "office_start", "office_end"] {
+                if let t = s[k] as? String, t.range(of: #"^\d{1,2}:\d{2}$"#, options: .regularExpression) != nil { cur[k] = t }
+            }
+            for k in ["idle_minutes", "away_minutes", "distraction_minutes", "retention_days", "remind_minutes", "gtask_sync_minutes"] {
                 if let v = s[k] as? Double { cur[k] = v }
             }
-            for k in ["notify_goal", "notify_distraction", "notify_away", "notify_schedule"] {
+            for k in ["notify_goal", "notify_distraction", "notify_away", "notify_schedule", "notify_gtask_new", "notify_gtask_due", "office_on"] {
                 if let v = s[k] as? Bool { cur[k] = v }
             }
+            if let d = s["office_days"] as? [Int] { cur["office_days"] = Array(Set(d.filter { (0...6).contains($0) })).sorted() }
             cfg["settings"] = cur
         }
         if let p = body["private"] as? [String: Any] {
@@ -1101,6 +1567,16 @@ final class Dashboard: NSObject, WKScriptMessageHandlerWithReply, WKNavigationDe
             cur["sites"] = clean(p["sites"])
             cur["words"] = clean(p["words"])
             cfg["private"] = cur
+        }
+        // Projects: naam + pehchaan wale shabd (folder / repo / site / title me ho to time us project me)
+        if let list = body["projects"] as? [[String: Any]] {
+            var seen = Set<String>()
+            cfg["projects"] = list.compactMap { p -> [String: Any]? in
+                let name = String((p["name"] as? String ?? "").trimmingCharacters(in: .whitespaces).prefix(60))
+                guard !name.isEmpty, seen.insert(name.lowercased()).inserted else { return nil }
+                let match = (p["match"] as? [String] ?? []).map { String($0.trimmingCharacters(in: .whitespaces).lowercased().prefix(100)) }.filter { !$0.isEmpty }
+                return ["name": name, "match": Array(match.prefix(20))]
+            }.prefix(50).map { $0 }
         }
         if let out = try? JSONSerialization.data(withJSONObject: cfg, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]) {
             try? out.write(to: catsURL)
@@ -1180,7 +1656,7 @@ final class Dashboard: NSObject, WKScriptMessageHandlerWithReply, WKNavigationDe
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNotificationCenterDelegate {
     let store = Store()
     let agenda = Agenda()
-    let google = GoogleTasks()
+    lazy var google = GoogleTasks(store: store)
     lazy var tracker = Tracker(store: store)
     lazy var dashboard = Dashboard(store: store, agenda: agenda, google: google)
     var statusItem: NSStatusItem!
@@ -1250,9 +1726,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUser
             checkGoal()
             checkReminders()
             checkSchedule()
+            google.refresh { _ in }   // har account apne interval / retry-wait ke hisaab se khud decide karta hai
+            google.checkDue()
         }
         if ticks % Int(3600 / POLL) == 0 { dailyChores() }   // har ghante
-        if ticks % Int(300 / POLL) == 1 { google.refresh { _ in } }   // Google Tasks har 5 min
+        if ticks == 1 { google.refresh(force: true) { _ in } }   // app khulte hi Google Tasks
         tracker.tick()
         checkDistraction()
         let total = todayRows().reduce(0) { $0 + $1.1 }
@@ -1267,7 +1745,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUser
     /// Abhi kya haal hai: "active", "break" (keyboard/mouse se door), ya "paused"
     func status() -> [String: Any] {
         if tracker.paused { return ["state": "paused"] }
-        if tracker.last == nil && tracker.lastActive > 0 { return ["state": "break", "since": tracker.lastActive + POLL] }
+        if tracker.last == nil && tracker.lastActive > 0 { return ["state": "break", "since": min(tracker.lastInput > 0 ? tracker.lastInput : tracker.lastActive + POLL, tracker.lastActive + POLL)] }
         return ["state": "active"]
     }
 
@@ -1295,7 +1773,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUser
             let key = "t|\(id)|\(due)"
             guard !reminded.contains(key), due - now.timeIntervalSince1970 <= lead else { continue }
             remember(key)
-            notify("Task at \(tf.string(from: Date(timeIntervalSince1970: due)))", t["title"] as? String ?? "", open: "agenda")
+            let proj = t["project"] as? String ?? ""
+            notify("Task at \(tf.string(from: Date(timeIntervalSince1970: due)))" + (proj.isEmpty ? "" : " · \(proj)"),
+                   t["title"] as? String ?? "", open: "agenda")
         }
     }
 
@@ -1338,8 +1818,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUser
         let info = response.notification.request.content.userInfo
         if let u = info["url"] as? String, u.lowercased().hasPrefix("https://"), let url = URL(string: u) {
             NSWorkspace.shared.open(url)
-        } else if info["open"] as? String == "agenda" {
-            dashboard.show(view: "agenda")
+        } else if let view = info["open"] as? String, ["agenda", "settings"].contains(view) {
+            dashboard.show(view: view)
         }
         done()
     }
@@ -1362,7 +1842,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUser
         let today = f.string(from: Date())
         guard goalNotifiedDay != today else { return }
         let rules = Rules.load()
-        let prod = todayRows().reduce(0.0) { $0 + (rules.productive(rules.categorize($1.0.app, $1.0.domain)) == true ? $1.1 : 0) }
+        let day0 = Calendar.current.startOfDay(for: Date()).timeIntervalSince1970
+        let prod = todayRows().reduce(0.0) {
+            $0 + (rules.productive(rules.categorize($1.0.app, $1.0.domain)) == true ? Settings.officeSeconds(max($1.0.start, day0), $1.0.end) : 0)
+        }
         if prod >= Settings.goalHours * 3600 {
             goalNotifiedDay = today
             UserDefaults.standard.set(today, forKey: "goalNotifiedDay")
@@ -1372,7 +1855,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUser
 
     /// Lagatar unproductive (social media / entertainment) pe bahut der — ek halka reminder
     private func checkDistraction() {
-        guard Settings.notifyDistraction, let a = tracker.last else { distractionStreak = 0; return }
+        guard Settings.notifyDistraction, let a = tracker.last, Settings.isOffice(Date().timeIntervalSince1970) else { distractionStreak = 0; return }
         let rules = Rules.load()
         if rules.productive(rules.categorize(a.app, a.domain)) == false {
             distractionStreak += POLL
@@ -1397,14 +1880,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUser
         let rules = Rules.load()
         var byCat: [String: Double] = [:]
         var total = 0.0, prod = 0.0
+        var personal = 0.0
+        let day0 = Calendar.current.startOfDay(for: Date()).timeIntervalSince1970
         for (r, secs) in todayRows() {
             let cat = rules.categorize(r.app, r.domain)
-            byCat[cat, default: 0] += secs
+            let office = Settings.officeSeconds(max(r.start, day0), r.end)
+            byCat[cat, default: 0] += office
+            if secs - office > 0 { byCat["Personal", default: 0] += secs - office; personal += secs - office }
             total += secs
-            if rules.productive(cat) == true { prod += secs }
+            if rules.productive(cat) == true { prod += office }
         }
+        byCat = byCat.filter { $0.value > 0 }
 
-        let head = total > 0 ? "Today: \(fmt(total)) · \(Int((prod / total * 100).rounded()))% productive"
+        let work = total - personal
+        let head = total > 0 ? "Today: \(fmt(total)) · \(work > 0 ? Int((prod / work * 100).rounded()) : 0)% productive"
                              : "No activity today yet"
         menu.addItem(NSMenuItem(title: head, action: nil, keyEquivalent: ""))
         for (cat, secs) in byCat.sorted(by: { $0.value > $1.value }) {
@@ -1476,16 +1965,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUser
         add(sub, "Open Dashboard", #selector(openDashboard), "d")
         add(sub, "Refresh", #selector(refreshDashboard), "r")
         sub.addItem(withTitle: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
-        sub.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-        sub.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         sub.addItem(withTitle: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        // Edit menu — iske bina text boxes me Cmd+V / Cmd+X / Cmd+Z kaam nahi karte
+        let editItem = NSMenuItem()
+        main.addItem(editItem)
+        let edit = NSMenu(title: "Edit")
+        editItem.submenu = edit
+        edit.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
+        edit.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "Z")
+        edit.addItem(.separator())
+        edit.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        edit.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        edit.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        edit.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         NSApp.mainMenu = main
     }
 
     private func installCategoriesFile() {
-        guard !FileManager.default.fileExists(atPath: catsURL.path),
-              let bundled = Bundle.main.url(forResource: "categories", withExtension: "json") else { return }
-        try? FileManager.default.copyItem(at: bundled, to: catsURL)
+        if !FileManager.default.fileExists(atPath: catsURL.path),
+           let bundled = Bundle.main.url(forResource: "categories", withExtension: "json") {
+            try? FileManager.default.copyItem(at: bundled, to: catsURL)
+        }
+        // Office hours ke bahar ka time is category me jaata hai — purani file me na ho to jodo
+        guard let data = try? Data(contentsOf: catsURL),
+              var cfg = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+        var cats = cfg["categories"] as? [String: Any] ?? [:]
+        guard cats["Personal"] == nil else { return }
+        cats["Personal"] = ["slot": 8, "color": "#4fa3b5", "dark": "#4b97a8", "productive": NSNull()] as [String: Any]
+        cfg["categories"] = cats
+        if let out = try? JSONSerialization.data(withJSONObject: cfg, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]) {
+            try? out.write(to: catsURL)
+        }
     }
 
     /// App pehle se chal rahi ho aur dobara kholi (Dock / Spotlight / Applications) — dashboard dikhao

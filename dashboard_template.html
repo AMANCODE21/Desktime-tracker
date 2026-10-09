@@ -196,11 +196,11 @@ main{padding:26px 30px 60px;max-width:1200px;width:100%}
 .proj .apps{margin:5px 0 0 20px;color:var(--faint);font-size:12px}
 .proj .tag{font:500 11px var(--text);color:var(--accent);background:var(--accent-soft);border-radius:5px;padding:1px 6px;margin-left:6px}
 .wt{position:relative;padding-left:4px}
-.wt .blk{display:grid;grid-template-columns:84px 4px minmax(0,1fr) auto;gap:12px;align-items:start;padding:8px 6px;border-radius:var(--r-sm)}
+.wt .blk{display:grid;grid-template-columns:84px 4px minmax(0,1fr) auto;gap:12px;align-items:start;padding:5px 6px;border-radius:var(--r-sm)}
 .wt .blk:hover{background:var(--sunk)}
 .wt .blk .t{font:600 12.5px var(--num);font-variant-numeric:tabular-nums}
 .wt .blk .t small{display:block;font-weight:400;color:var(--faint)}
-.wt .blk .bar{width:4px;align-self:stretch;min-height:30px;border-radius:2px}
+.wt .blk .bar{width:4px;align-self:stretch;min-height:26px;border-radius:2px}
 .wt .blk .ttl{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wt .blk .sub{color:var(--faint);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wt .blk .d{font:600 12.5px var(--num);color:var(--muted)}
@@ -210,12 +210,23 @@ main{padding:26px 30px 60px;max-width:1200px;width:100%}
 .gacc{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
 .gacc:last-child{border-bottom:0}
 .gacc b{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.gst{font-size:12px;color:var(--faint);white-space:nowrap}
+.gst.warn{color:#b7791f}.gst.bad{color:#c53030;font-weight:600}
 .gform{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin:10px 0}
 .gform input{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:6px 9px;color:var(--ink);min-width:0}
 details.steps summary{cursor:pointer;color:var(--accent);font-size:13px}
 details.steps ol{color:var(--muted);font-size:13px;padding-left:20px;margin:8px 0}
 details.steps li{margin:5px 0}
 .gtag{font-size:11px;color:var(--faint);white-space:nowrap}
+.gaccs{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:-4px 0 10px}
+.gchip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:20px;padding:2px 10px;font-size:12px;color:var(--muted);max-width:220px}
+.gchip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gchip i{width:7px;height:7px;border-radius:50%;background:var(--prod);flex:none}
+.gchip.warn i{background:#d69e2e}.gchip.bad i{background:var(--unprod)}
+.gplus{display:inline-flex;align-items:center;justify-content:center;gap:4px;height:26px;padding:0 10px;border:1px dashed var(--accent);border-radius:20px;background:none;color:var(--accent);font-size:12.5px;font-weight:600;cursor:pointer}
+.gplus:hover{background:var(--accent-soft)}
+.gplus:disabled{opacity:.5;cursor:default}
+.gplus.big{height:34px;padding:0 14px;font-size:13.5px;margin-top:10px}
 .task .when.overdue{color:var(--unprod);font-weight:600}
 .gerr{color:var(--unprod);font-size:13px;margin:6px 0}
 @media (max-width:900px){ .gform{grid-template-columns:1fr} }
@@ -239,9 +250,29 @@ details.steps li{margin:5px 0}
 .task .when{font:12.5px var(--num);color:var(--muted);font-variant-numeric:tabular-nums}
 .task .del{border:0;background:none;color:var(--faint);cursor:pointer;font-size:16px;line-height:1;visibility:hidden}
 .task:hover .del{visibility:visible}
-.task-form{display:flex;gap:8px;margin-bottom:10px}
-.task-form input{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:6px 9px;color:var(--ink)}
-.task-form input[name=title]{flex:1;min-width:0}
+.task-form{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.task-form input{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:6px 9px;color:var(--ink);font:inherit;font-size:13px}
+.task-form input[name=title]{flex:1 1 100%;min-width:0}
+.task-form input[name=project]{flex:1 1 120px;min-width:0}
+.task-form .btn{margin-left:auto}
+.task .ptag{font:500 11px var(--text);color:var(--accent);background:var(--accent-soft);border-radius:5px;padding:1px 6px;margin-left:6px;white-space:nowrap}
+.proj .ptasks{font-size:12.5px;color:var(--muted);margin:4px 0 0 20px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proj .ptasks span{color:var(--faint)}
+.proj .ptasks.late span,.proj .detail .late{color:var(--unprod);font-weight:600}
+.proj .detail input[type=checkbox]{vertical-align:-2px;margin-right:4px}
+.proj .kws{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:6px 0 0 20px}
+.proj .kws span{font:11.5px var(--num);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:0 6px}
+.proj .kws select{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:2px 6px;color:var(--muted);font-size:12px}
+.kwedit{border:0;background:none;color:var(--accent);font-size:12px;cursor:pointer;padding:0 4px}
+.pedit{display:flex;flex-direction:column;gap:8px;padding:12px;margin:8px 0;border:1px solid var(--accent);border-radius:var(--r-md);background:var(--accent-soft)}
+.pedit input,.pedit textarea{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:7px 9px;color:var(--ink);font:inherit;font-size:13px;resize:vertical}
+.pedit .btns{display:flex;gap:8px;flex-wrap:wrap}
+.pedit .danger{margin-left:auto;color:var(--unprod)}
+.kwpick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px}
+.kwpick button{border:1px dashed var(--accent);background:none;color:var(--accent);border-radius:14px;padding:1px 9px;font-size:12px;cursor:pointer}
+.proj .pbar{height:4px;border-radius:2px;background:var(--sunk);margin:8px 0 0 20px;overflow:hidden}
+.proj .pbar i{display:block;height:100%;background:var(--accent);border-radius:2px}
+.task-note{font-size:12.5px;color:var(--muted);margin:-4px 0 8px 2px}
 .connect ol{margin:8px 0 14px;padding-left:20px;color:var(--muted)} .connect li{margin:4px 0}
 .connect .btns{display:flex;gap:8px;flex-wrap:wrap}
 .tipbox{background:var(--sunk);border-radius:var(--r-md);padding:12px 14px;font-size:13px;color:var(--muted)}
@@ -255,6 +286,26 @@ details.steps li{margin:5px 0}
 .away-row .when{font-family:var(--num);font-variant-numeric:tabular-nums}
 .away-row .tm{font:600 13px var(--num);color:var(--muted)}
 .away-row select,.field select,.field input[type=number],.proj-start input{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:5px 8px;color:var(--ink)}
+.away-row{cursor:pointer}
+.away-row .lbl{font-size:13px;color:var(--muted);white-space:nowrap}
+.away-row .lbl.none{color:var(--accent)}
+.away-row .pen{color:var(--faint);font-size:12px}
+.ribbon .s.brk[data-away],.log .row.brk[data-away],.wt .blk.brk[data-away]{cursor:pointer}
+.log .row.brk[data-away]:hover,.wt .blk.brk[data-away]:hover{background:var(--sunk)}
+dialog.brk-dlg{border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);color:var(--ink);padding:20px 22px;width:min(420px,calc(100vw - 32px));box-shadow:0 18px 50px rgba(0,0,0,.25)}
+dialog.brk-dlg::backdrop{background:rgba(0,0,0,.3)}
+.brk-dlg h3{font:600 16px var(--num);margin:0 0 4px}
+.brk-dlg .chips{margin:12px 0 8px}
+.brk-dlg .chips button.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.brk-dlg input{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:6px 9px;color:var(--ink);min-width:0}
+.brk-dlg .times{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.brk-dlg .times label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+.brk-dlg .acts{display:flex;gap:8px;align-items:center;margin-top:16px}
+.brk-dlg .acts .del{margin-right:auto;color:var(--unprod);border-color:var(--line)}
+.days-pick{display:flex;flex-wrap:wrap;gap:4px}
+.days-pick label{display:inline-flex;align-items:center;gap:3px;font-size:12.5px;border:1px solid var(--line);border-radius:6px;padding:2px 7px}
+.ribbon .s.gap{background:transparent;cursor:pointer}
+.ribbon .s.gap:hover{background:var(--sunk);filter:none}
 .ribbon .s.off{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.5) 0 3px,transparent 3px 7px)}
 .running{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r-md);background:var(--accent-soft);margin-bottom:12px}
 .running b{font:600 15px var(--num)} .running .tm{font:600 15px var(--num);color:var(--accent);margin-left:auto}
@@ -265,6 +316,38 @@ details.steps li{margin:5px 0}
 .chips button{border:1px solid var(--line);background:none;border-radius:20px;padding:3px 11px;font-size:12.5px;cursor:pointer;color:var(--muted)}
 .chips button:hover{border-color:var(--accent);color:var(--accent)}
 .settings{max-width:720px}
+.set-wrap{max-width:780px}
+.set-top{display:flex;justify-content:space-between;align-items:center;margin:-6px 2px 10px;font-size:12.5px}
+.set-card{padding:0}
+.set-head{display:grid;grid-template-columns:40px minmax(0,1fr) 20px;gap:14px;align-items:center;padding:16px 20px;cursor:pointer;list-style:none;border-radius:var(--r-md)}
+.set-head::-webkit-details-marker{display:none}
+.set-head:hover{background:var(--sunk)}
+.set-ico{width:40px;height:40px;border-radius:11px;background:var(--sunk);color:var(--muted);display:flex;align-items:center;justify-content:center}
+.set-head:hover .set-ico{color:var(--ink)}
+.set-card[open] .set-ico{background:var(--accent-soft);color:var(--accent)}
+.set-tt{min-width:0}
+.set-tt b{display:block;font:600 15px var(--num)}
+.set-tt small{display:block;color:var(--faint);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.set-tt small.bad{color:var(--unprod)}
+.chev{width:9px;height:9px;border-right:2px solid var(--faint);border-bottom:2px solid var(--faint);transform:rotate(-45deg);transition:transform .15s;justify-self:center}
+.set-card[open] .chev{transform:rotate(45deg)}
+.set-card[open] .set-head{border-bottom:1px solid var(--line);border-radius:var(--r-md) var(--r-md) 0 0}
+.set-body{padding:6px 20px 16px}
+.set-status{font-size:12.5px;color:var(--faint);min-height:20px}
+.set-cards{display:flex;flex-direction:column;gap:12px;margin:0}
+.set-card .sub-h{font:600 12px var(--text);text-transform:uppercase;letter-spacing:.04em;color:var(--faint);margin:16px 0 4px}
+.set-card .sub-h:first-of-type{margin-top:6px}
+.field .ctl{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;justify-content:flex-end}
+.field .ctl .dep{display:inline-flex;align-items:center;gap:6px}
+.field input[type=time]{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:5px 8px;color:var(--ink)}
+.field input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);margin:0}
+.dep{transition:opacity .15s}
+.dep.off{opacity:.4;pointer-events:none}
+.set-card > .dep > .field:last-child{border-bottom:0}
+.always-private{background:var(--sunk);border-radius:var(--r-sm);padding:10px 12px;font-size:12.5px;color:var(--muted);margin:6px 0 4px}
+.gico{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:color-mix(in srgb,var(--prod) 18%,transparent);color:var(--prod);flex:none}
+.gico.bad{background:color-mix(in srgb,var(--unprod) 18%,transparent);color:var(--unprod)}
+@media (max-width:900px){ .set-head{padding:14px 16px} .set-body{padding:6px 16px 14px} }
 .settings h3{font:600 14px var(--num);margin:22px 0 10px}
 .settings h3:first-child{margin-top:0}
 .field{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
@@ -311,7 +394,7 @@ details.steps li{margin:5px 0}
       <button data-v="day">Day <kbd>D</kbd></button>
       <button data-v="week">Week <kbd>W</kbd></button>
       <button data-v="month">Month <kbd>M</kbd></button>
-      <button data-v="work">Work <kbd>K</kbd></button>
+      <button data-v="work">Projects <kbd>P</kbd></button>
       <button data-v="agenda">Agenda <kbd>A</kbd></button>
       <button data-v="settings">Settings <kbd>,</kbd></button>
     </nav>
@@ -349,13 +432,29 @@ details.steps li{margin:5px 0}
   </main>
 </div>
 <div class="tip" id="tip"></div>
+<dialog class="brk-dlg" id="brkDlg" aria-labelledby="brkTitle"><form method="dialog" id="brkForm">
+  <h3 id="brkTitle">Edit break</h3><div class="faint" id="brkDay" style="font-size:12.5px"></div>
+  <div class="chips" id="brkChips"></div>
+  <input name="label" id="brkLabel" maxlength="40" placeholder="Or type your own, e.g. Gym" aria-label="What was this?" style="width:100%">
+  <input name="topic" id="brkTopic" maxlength="55" placeholder="Topic / with whom (optional), e.g. Fees discussion with Rahul" aria-label="Topic" style="width:100%;margin-top:8px">
+  <div class="times"><label>From<input type="time" name="from" required></label><label>To<input type="time" name="to" required></label></div>
+  <div class="faint" style="font-size:12px">Meeting, Call and Offline work count as productive work. Everything else is a break.</div>
+  <div class="gerr" id="brkErr" role="alert"></div>
+  <div class="acts"><button type="button" class="btn ghost del" id="brkDel">Delete</button><button type="button" class="btn ghost" id="brkCancel">Cancel</button><button class="btn" value="save">Save</button></div>
+</form></dialog>
 
 <script>
 const DATA = /*__DATA__*/null;
 // App ke andar data Swift se aata hai; report.py wale static page me sab DATA.days me hota hai.
 const bridge = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.dt;
 const hasCharts = typeof echarts !== 'undefined';
-let RULES = DATA.rules;
+let RULES = withPersonal(DATA.rules);
+// Office hours ke bahar ka time is category me (purani categories.json me na ho tab bhi)
+function withPersonal(R){
+  R.categories = R.categories || {};
+  if (!R.categories.Personal) R.categories.Personal = {slot:8, color:'#4fa3b5', dark:'#4b97a8', productive:null};
+  return R;
+}
 let cache = Object.assign({}, DATA.days);
 let summary = {};
 const PRIVATE = '🔒 Private';
@@ -463,6 +562,11 @@ async function loadExtras(a, b){
   return extras[k];
 }
 const OFFLINE_WORK = ['Meeting', 'Call', 'Offline work'];   // ye away time kaam me gina jaata hai
+// Label "Meeting · Fees discussion" = kind + topic
+const TOPIC_SEP = ' · ';
+const kindOf = label => String(label || '').split(TOPIC_SEP)[0];
+const topicOf = label => String(label || '').split(TOPIC_SEP).slice(1).join(TOPIC_SEP);
+const isOffline = label => OFFLINE_WORK.includes(kindOf(label));
 const AWAY_LABELS = ['Meeting', 'Call', 'Offline work', 'Lunch', 'Break', 'Personal'];
 const sod = t => { const d = new Date(t*1000); return d.getHours()*3600 + d.getMinutes()*60 + d.getSeconds(); };
 // absolute [start,end] ko din ke hisson me baanto: [{day, s, e}]
@@ -479,10 +583,38 @@ function splitDays(st, en){
 function offlineRows(E, keys){
   const q = state.q.trim().toLowerCase(), out = [];
   for (const [, st, en, label] of E.away){
-    if (!OFFLINE_WORK.includes(label)) continue;
+    if (!isOffline(label)) continue;
     if (q && !('offline '+label).toLowerCase().includes(q)) continue;
     for (const p of splitDays(st, en)) if (keys.includes(p.day))
       out.push({day:p.day, s:p.s, e:p.e, d:p.e-p.s, app:'Offline', title:label, domain:'', url:'', cat:'Work', prod:prodOf('Work'), priv:false, offline:true});
+  }
+  return out;
+}
+
+// Office hours: "HH:MM" -> seconds; is din ke office wale hisse [[s,e]] (din ki shuruaat se seconds)
+const hm2s = t => { const [h, m] = String(t).split(':').map(Number); return (h||0)*3600 + (m||0)*60; };
+function officeWin(day){
+  const S = RULES.settings || {};
+  if (S.office_on === false) return [[0, 86400]];
+  const os = hm2s(S.office_start || '09:00'), oe = hm2s(S.office_end || '21:00'), days = S.office_days || [0,1,2,3,4,5,6];
+  const wd = parse(day).getDay(), out = [];
+  if (oe > os){ if (days.includes(wd)) out.push([os, oe]); }
+  else {   // raat ki shift, jaise 21:00 – 06:00
+    if (days.includes((wd+6)%7)) out.push([0, oe]);
+    if (days.includes(wd)) out.push([os, 86400]);
+  }
+  return out;
+}
+// ek row ko office / personal hisson me kaato
+function officeParts(day, s, e){
+  const wins = officeWin(day), cuts = [s, e];
+  for (const w of wins) for (const x of w) if (x > s && x < e) cuts.push(x);
+  cuts.sort((a,b) => a-b);
+  const out = [];
+  for (let i = 0; i < cuts.length-1; i++){
+    const a = cuts[i], b = cuts[i+1], mid = (a+b)/2, office = wins.some(([x,y]) => mid >= x && mid < y);
+    const L = out[out.length-1];
+    if (L && L.office === office) L.e = b; else out.push({s:a, e:b, office});
   }
   return out;
 }
@@ -492,15 +624,19 @@ function rowsFor(keys){
   for (const day of keys) for (const [s,e,app,title,domain,url] of (cache[day]||[])){
     if (q && !(app+' '+title+' '+domain+' '+url).toLowerCase().includes(q)) continue;
     const cat = categorize(app, domain||'');
-    out.push({day, s, e, d:e-s, app, title:title||'', domain:domain||'', url:url||'', cat, prod:prodOf(cat), priv:title === PRIVATE});
+    for (const p of officeParts(day, s, e)){
+      const c = p.office ? cat : 'Personal';
+      out.push({day, s:p.s, e:p.e, d:p.e-p.s, app, title:title||'', domain:domain||'', url:url||'', cat:c, prod:prodOf(c), priv:title === PRIVATE, personal:!p.office});
+    }
   }
   return out;
 }
 
 function aggregate(rows){
-  const A = {total:0, prod:0, unprod:0, neutral:0, byCat:{}, byApp:{}, bySite:{}, appParts:{}, sitePages:{}, sitePriv:{}, byDay:{}, appMix:{}};
+  const A = {total:0, prod:0, unprod:0, neutral:0, personal:0, byCat:{}, byApp:{}, bySite:{}, appParts:{}, sitePages:{}, sitePriv:{}, byDay:{}, appMix:{}};
   for (const r of rows){
     A.total += r.d;
+    if (r.personal) A.personal += r.d;
     if (r.prod === true) A.prod += r.d; else if (r.prod === false) A.unprod += r.d; else A.neutral += r.d;
     add(A.byCat, r.cat, r.d); add(A.byApp, r.app, r.d);
     add(A.appParts[r.app] = A.appParts[r.app] || {}, r.domain || (r.priv ? PRIVATE : r.title || '(no title)'), r.d);
@@ -542,14 +678,14 @@ async function render(){
   current = {rows, keys};
   // breaks (away jo kaam me nahi gina) — ribbon / log me dikhane ke liye
   const breaks = [];
-  for (const [, st, en, label] of E.away) if (!OFFLINE_WORK.includes(label))
-    for (const p of splitDays(st, en)) if (keys.includes(p.day)) breaks.push({day:p.day, s:p.s, e:p.e, d:p.e-p.s, label:label || 'Break'});
+  for (const [id, st, en, label] of E.away) if (!isOffline(label))
+    for (const p of splitDays(st, en)) if (keys.includes(p.day)) breaks.push({id, day:p.day, s:p.s, e:p.e, d:p.e-p.s, label:label || 'Break'});
   live = bridge && keys.includes(todayKey()) ? JSON.parse(await bridge.postMessage({type:'status'})) : null;
   charts.forEach(c => c.dispose()); charts = [];
   $('#foot').textContent = bridge ? 'Updates every minute' : 'Generated ' + DATA.generated + '. Run report.py again for fresh data.';
 
   if (!rows.length){
-    $('#main').innerHTML = (E.running || E.projects.length ? `<div class="stack" style="margin-bottom:16px">${projectsPanel(E, a, b)}</div>` : '') + `<div class="panel empty-state"><h3>${state.q ? 'No matches' : 'No activity yet'}</h3>
+    $('#main').innerHTML = `<div class="panel empty-state"><h3>${state.q ? 'No matches' : 'No activity yet'}</h3>
       ${state.q ? `Nothing matches “${esc(state.q)}”. Clear the search to see everything.`
                 : 'DeskTime records your work automatically. Check back after some time at the computer.'}</div>`;
     return;
@@ -558,9 +694,10 @@ async function render(){
   if (state.view === 'day') html.push(dayHero(rows, A, breaks));
   else if (state.view === 'week') html.push(rangeHero(A, keys, 'week'));
   else html.push(rangeHero(A, keys, 'month'));
-  html.push(`<div class="cols">${listsPanel(A)}<div class="stack">${catPanel()}${state.view === 'day' ? hoursPanel() : ''}</div></div>`);
-  const aw = awayPanel(E);
-  html.push(aw ? `<div class="cols even">${projectsPanel(E, a, b)}${aw}</div>` : projectsPanel(E, a, b));
+  // Day me Category ke neeche "By hour"; week/month me wo nahi hota, to wahan Breaks aa jata hai (khali jagah na bache)
+  const aw = awayPanel(E), isDay = state.view === 'day';
+  html.push(`<div class="cols">${listsPanel(A)}<div class="stack">${catPanel()}${isDay ? hoursPanel() : aw}</div></div>`);
+  if (isDay && aw) html.push(aw);
   if (state.view === 'day') html.push(logPanel(rows, breaks));
   $('#main').innerHTML = `<div class="stack">${html.join('')}</div>`;
   drawCharts(rows, A, keys);
@@ -596,6 +733,13 @@ function dayHero(rows, A, breaks){
   // abhi break chal raha hai to ribbon me "abhi tak" ka break bhi dikhao
   const allBreaks = st === 'break' && live.since ? breaks.concat([{s:sod(live.since), e:nowSec, d:nowSec - sod(live.since), label:'Break (now)'}]) : breaks;
   const lastEnd = Math.max(D.last, ...allBreaks.map(b => b.e));
+  // khali jagah (na kaam, na break) — hover pe time dikhe, click se naam do
+  const gaps = [];
+  { let end = D.first;
+    for (const x of [...rows, ...allBreaks].sort((p, q) => p.s - q.s)){
+      if (x.s - end >= 60) gaps.push({s:end, e:x.s, d:x.s - end});
+      end = Math.max(end, x.e);
+    } }
   const h0 = Math.floor(D.first/3600), h1 = Math.min(24, Math.ceil(lastEnd/3600));
   const off = h0*3600, span = Math.max(1, h1-h0)*3600;
   const pos = r => `left:${(r.s-off)/span*100}%;width:${r.d/span*100}%`;
@@ -604,7 +748,7 @@ function dayHero(rows, A, breaks){
   const used = new Set(rows.map(r => r.cat));
   return `<section class="hero" aria-label="Day summary">
     <div class="hero-top">
-      <div><div class="big">${fmt(A.total)}</div><div class="big-label">desk time</div></div>
+      <div><div class="big">${fmt(A.total)}</div><div class="big-label">desk time${A.personal >= 60 ? ` · ${fmt(A.total - A.personal)} office, ${fmt(A.personal)} personal` : ''}</div></div>
       <div class="span"><div><strong>${clock(D.first)}</strong><div class="faint" style="font-size:12px">arrived</div></div>
         <div class="line"></div>
         <div>${st === 'active' ? '<span class="live"><i></i>Online now</span>'
@@ -612,9 +756,10 @@ function dayHero(rows, A, breaks){
              : st === 'paused' ? '<strong>Paused</strong>' : `<strong>${clock(D.last)}</strong>`}
           <div class="faint" style="font-size:12px">${st === 'active' ? 'still working' : st === 'break' ? 'for ' + fmt(nowSec - sod(live.since)) : st === 'paused' ? 'tracking is paused' : 'left'}</div></div></div>
     </div>
-    <div class="ribbon" id="ribbon" data-breaks='${esc(JSON.stringify(allBreaks))}'>
+    <div class="ribbon" id="ribbon" data-breaks='${esc(JSON.stringify(allBreaks))}' data-gaps='${esc(JSON.stringify(gaps))}'>
       <div class="lane">${rows.map((r,i) => `<div class="s${r.offline ? ' off' : ''}" data-i="${i}" style="${pos(r)};background:${color(r.cat)}"></div>`).join('')}${
-        allBreaks.map((b,i) => `<div class="s brk" data-b="${i}" style="${pos(b)}"></div>`).join('')}</div>
+        allBreaks.map((b,i) => `<div class="s brk" data-b="${i}"${b.id && bridge ? ` data-away="${b.id}"` : ''} style="${pos(b)}"></div>`).join('')}${
+        gaps.map((g,i) => `<div class="s gap" data-g="${i}"${bridge ? ` data-gap="${g.s},${g.e}"` : ''} style="${pos(g)}"></div>`).join('')}</div>
       <div class="lane thin">${rows.map((r,i) => `<div class="s" data-i="${i}" style="${pos(r)};background:${pcol(r.prod)}"></div>`).join('')}</div>
       <div class="ticks">${ticks}</div>
       <div class="legend">${catOrder().filter(c => used.has(c)).map(c => `<span><i class="sw" style="background:${color(c)}"></i>${esc(c)}</span>`).join('')}
@@ -623,7 +768,7 @@ function dayHero(rows, A, breaks){
     </div>
     <div class="stats">
       ${stat(fmt(A.prod), 'Productive', fmt(A.unprod)+' unproductive', 'color:var(--prod)')}
-      ${stat(pct(A.prod,A.total)+'%', 'Productivity', 'share of desk time')}
+      ${stat(pct(A.prod,A.total-A.personal)+'%', 'Productivity', A.personal ? 'share of office-hours time' : 'share of desk time')}
       ${stat(pct(A.prod,goal())+'%', 'Effectiveness', `goal ${fmt(goal())} a day`)}
       ${stat(fmt(Math.max(0, D.last-D.first-A.total)), 'Breaks', allBreaks.length ? `${allBreaks.length} long ${allBreaks.length === 1 ? 'break' : 'breaks'}` : 'away between sessions')}
     </div>
@@ -644,7 +789,7 @@ function rangeHero(A, keys, kind){
   return `<section class="hero">${top}${body}
     <div class="stats">
       ${stat(fmt(A.prod), 'Productive', fmt(A.unprod)+' unproductive', 'color:var(--prod)')}
-      ${stat(pct(A.prod,A.total)+'%', 'Productivity', 'share of desk time')}
+      ${stat(pct(A.prod,A.total-A.personal)+'%', 'Productivity', A.personal ? `office hours · ${fmt(A.personal)} personal` : 'share of desk time')}
       ${stat(pct(A.prod,goal()*n)+'%', 'Effectiveness', `goal ${fmt(goal())} a day`)}
       ${stat(best ? parse(best[0]).toLocaleDateString('en-IN',{day:'numeric', month:'short'}) : '—', 'Best day', best ? fmt(best[1].prod)+' productive' : '')}
     </div>${prodMeter(A)}</section>`;
@@ -723,12 +868,12 @@ function logPanel(rows, breaks = []){
     if (L && L.w === w && L.title === r.title && r.s - L.e < 120){ L.e = r.e; L.d += r.d; }
     else ss.push({s:r.s, e:r.e, d:r.d, w, app:r.app, cat:r.cat, title:r.title, url:r.url, priv:r.priv});
   }
-  for (const b of breaks) ss.push({s:b.s, e:b.e, d:b.d, brk:true, label:b.label});
+  for (const b of breaks) ss.push({s:b.s, e:b.e, d:b.d, brk:true, label:b.label, id:b.id});
   const list = ss.filter(x => x.d >= 30).sort((x,y) => y.s - x.s);
   const shown = state.more.log ? list : list.slice(0, 60);
   return `<section class="panel"><h2>Activity log <span class="hint">Newest first, ${list.length} entries</span></h2>
     <div class="log">${shown.map(x => {
-      if (x.brk) return `<div class="row brk"><span class="when">${clock(x.s)}</span><i class="dot" style="background:var(--brk)"></i>
+      if (x.brk) return `<div class="row brk"${bridge ? ` data-away="${x.id}" title="Click to edit"` : ''}><span class="when">${clock(x.s)}</span><i class="dot" style="background:var(--brk)"></i>
         <span class="what">☕ <b>${esc(x.label)}</b> <span class="app">${clock(x.s)} – ${clock(x.e)}</span></span><span class="tm">${fmt(x.d)}</span></div>`;
       const href = safeUrl(x.url), t = x.title && x.title !== x.w ? x.title : '';
       const what = x.priv ? `<span class="private-note" style="display:inline-flex">${LOCK} Private</span>`
@@ -742,36 +887,82 @@ function logPanel(rows, breaks = []){
 
 // ---------- away + projects ----------
 function awayPanel(E){
-  if (!E.away.length) return '';
+  const canAdd = bridge && state.view === 'day';
+  if (!E.away.length && !canAdd) return '';
   const list = [...E.away].reverse();
-  return `<section class="panel"><h2>Away from computer <span class="hint">Meeting, Call and Offline work count as productive</span></h2>
-    ${list.map(([id, st, en, label]) => `<div class="away-row">
+  return `<section class="panel"><h2>Breaks &amp; away <span class="hint">${bridge ? 'click one to change its name or time' : 'Meeting, Call and Offline work count as productive'}</span></h2>
+    ${list.map(([id, st, en, label]) => `<div class="away-row"${bridge ? ` data-away="${id}" role="button" tabindex="0" aria-label="Edit break ${clock(sod(st))} to ${clock(sod(en))}"` : ''}>
       <span class="when">${clock(sod(st))} – ${clock(sod(en))}${state.view !== 'day' ? ` <span class="faint">${new Date(st*1000).toLocaleDateString('en-IN',{day:'numeric', month:'short'})}</span>` : ''}</span>
       <span class="tm">${fmt(en-st)}</span>
-      ${bridge ? `<select data-away="${id}" aria-label="What were you doing?"><option value="">What was this?</option>${AWAY_LABELS.map(l => `<option ${l===label?'selected':''}>${l}</option>`).join('')}</select>`
-               : `<span class="muted">${esc(label || 'Not labelled')}</span>`}
-    </div>`).join('')}</section>`;
+      <span class="lbl ${label ? '' : 'none'}">${esc(label || (bridge ? 'What was this?' : 'Not labelled'))}${bridge ? ' <span class="pen">✎</span>' : ''}</span>
+    </div>`).join('') || '<div class="muted" style="padding:6px 8px">No breaks on this day.</div>'}
+    ${canAdd ? '<button class="btn ghost" data-addaway style="margin-top:10px">+ Add a break</button>' : ''}</section>`;
 }
 
-function projectsPanel(E, a, b){
-  const lo = a.getTime()/1000, hi = addDays(b,1).getTime()/1000, tot = {};
-  for (const [name, st, en] of E.projects) add(tot, name, Math.max(0, Math.min(en, hi) - Math.max(st, lo)));
-  const items = sorted(tot), max = items.length ? items[0][1] : 1;
-  const run = E.running ? `<div class="running"><span class="live"><i></i></span><b>${esc(E.running.name)}</b>
-      <span class="tm">${fmt(Date.now()/1000 - E.running.start)}</span>${bridge ? '<button class="btn ghost" data-pstop>Stop</button>' : ''}</div>` : '';
-  const start = bridge && !E.running ? `<form class="proj-start" data-pform><input name="p" placeholder="What are you working on?" maxlength="60" aria-label="Project name"><button class="btn">Start</button></form>
-      ${E.recent.length ? `<div class="chips">${E.recent.map(n => `<button data-pstart="${esc(n)}">▶ ${esc(n)}</button>`).join('')}</div>` : ''}` : '';
-  return `<section class="panel"><h2>Projects <span class="hint">a timer you start and stop yourself</span></h2>${run}${start}
-    ${items.map(([n,v]) => `<div class="item" style="cursor:default"><div class="nm"><i class="dot" style="background:var(--accent)"></i><span>${esc(n)}</span></div>
-      <div class="meta"><span class="tm">${fmt(v)}</span></div><div class="bar"><i style="width:${v/max*100}%;background:var(--accent)"></i></div></div>`).join('')
-      || (run || start ? '' : '<div class="muted">No project time here. Start one from the menu bar or the DeskTime app.</div>')}</section>`;
+// ---------- break editor (dialog) ----------
+let brkEdit = null;   // {id, st, en, label}
+const toHM = t => { const d = new Date(t*1000); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+function openBreak(id, pre){
+  let b;
+  if (id){
+    const all = Object.values(extras).flatMap(E => E.away), a = all.find(x => x[0] === id);
+    if (!a) return;
+    b = {id, st:a[1], en:a[2], label:a[3]};
+  } else if (pre){   // ribbon ki khali jagah pe click
+    b = {id:0, st:pre.st, en:pre.en, label:''};
+  } else {   // naya: is din 1:00 – 1:45 PM lunch (aaj ho aur abhi 1:45 nahi hua to pichhle 45 min)
+    const d = parse(state.date), st = d.getTime()/1000 + 13*3600, now = Date.now()/1000;
+    b = st + 2700 <= now ? {id:0, st, en:st + 2700, label:'Lunch'} : {id:0, st:Math.floor(now/60)*60 - 2700, en:Math.floor(now/60)*60, label:'Break'};
+  }
+  brkEdit = b;
+  const f = $('#brkForm');
+  $('#brkTitle').textContent = b.id ? 'Edit break' : 'Add a break';
+  $('#brkDay').textContent = new Date(b.st*1000).toLocaleDateString('en-IN',{weekday:'long', day:'numeric', month:'long'});
+  f.label.value = kindOf(b.label); f.topic.value = topicOf(b.label);
+  f.from.value = toHM(b.st); f.to.value = toHM(b.en);
+  $('#brkDel').style.display = b.id ? '' : 'none';
+  $('#brkErr').textContent = '';
+  drawChips();
+  $('#brkDlg').showModal();
 }
+function drawChips(){
+  const cur = $('#brkLabel').value.trim();
+  $('#brkChips').innerHTML = AWAY_LABELS.map(l => `<button type="button" data-lbl="${esc(l)}" class="${l === cur ? 'on' : ''}" aria-pressed="${l === cur}">${esc(l)}</button>`).join('');
+}
+$('#brkChips').addEventListener('click', e => { const c = e.target.closest('[data-lbl]'); if (c){ $('#brkLabel').value = c.dataset.lbl; drawChips(); } });
+$('#brkLabel').addEventListener('input', drawChips);
+$('#brkCancel').onclick = () => $('#brkDlg').close();
+$('#brkDel').onclick = async () => {
+  if (!brkEdit || !brkEdit.id) return;
+  await bridge.postMessage({type:'deleteAway', id:brkEdit.id});
+  $('#brkDlg').close(); extras = {}; render();
+};
+$('#brkForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  e.stopPropagation();
+  const f = e.target, d0 = new Date(brkEdit.st*1000); d0.setHours(0,0,0,0);
+  const base = d0.getTime()/1000, st = base + hm2s(f.from.value);
+  let en = base + hm2s(f.to.value);
+  if (en <= st) en += 86400;   // raat 12 ke paar, jaise 11:30 PM – 12:15 AM
+  const r = JSON.parse(await bridge.postMessage({type:'saveAway', id:brkEdit.id, start:st, end:en, label:[f.label.value.trim() || (f.topic.value.trim() ? 'Meeting' : ''), f.topic.value.trim()].filter(Boolean).join(TOPIC_SEP)}));
+  if (r.error){ $('#brkErr').textContent = r.error; return; }
+  $('#brkDlg').close(); extras = {}; render();
+});
+
 
 // ---------- work: kis project pe kis time kaam kiya ----------
 const IDE = /^(visual studio code|code|cursor|xcode|intellij idea|pycharm|webstorm|android studio|sublime text|zed|windsurf)$/i;
-// Activity se project ka naam: VS Code ka folder, GitHub repo, Google Doc / Notion page, warna site / app
+// Link wala keyword: https://, www., ?query aur #heading hata do — save hone wale links me ye hote hi nahi (privacy)
+const cleanKw = x => String(x).trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split(/[?#]/)[0].replace(/\/+$/, '');
+// Settings → Projects: koi pehchaan wala shabd folder / repo / link / title me mile to wo project
 function projectOf(r){
   if (r.offline) return 'Meetings & offline work';
+  const auto = autoProject(r), hay = (auto + ' ' + r.domain + (r.priv ? '' : ' ' + r.title + ' ' + r.url)).toLowerCase();
+  for (const p of RULES.projects || []) if ((p.match || []).some(k => (k = cleanKw(k)) && hay.includes(k))) return p.name;
+  return auto;
+}
+// Activity se project ka naam: VS Code ka folder, GitHub repo, Google Doc / Notion page, warna site / app
+function autoProject(r){
   if (r.priv) return (r.domain || r.app) + ' (private)';
   if (IDE.test(r.app) && r.title.includes(' — ')) return r.title.split(' — ').pop().replace(/\s*\[[^\]]*\]$/, '').trim();
   if (r.domain === 'github.com'){ const m = r.url.match(/github\.com\/([^/?#]+\/[^/?#]+)/); if (m) return m[1]; }
@@ -783,97 +974,55 @@ function projectOf(r){
 async function renderWork(){
   charts.forEach(c => c.dispose()); charts = [];
   const [a, b] = range(), keys = keysIn(a, b), d = parse(state.date);
-  $('#label').textContent = 'Work';
-  $('#sublabel').textContent = d.toLocaleDateString('en-IN',{weekday:'long', day:'numeric', month:'long'}) + ' · what you worked on, and when';
+  $('#label').textContent = 'Projects';
+  $('#sublabel').textContent = d.toLocaleDateString('en-IN',{weekday:'long', day:'numeric', month:'long'}) + ' · time on each project';
   $('#next').disabled = state.date >= todayKey();
   history.replaceState(null, '', `#work/${state.date}`);
-  const [, , E] = await Promise.all([load(keys), renderMini(), loadExtras(a, b)]);
-  const rows = rowsFor(keys).concat(offlineRows(E, keys)).sort((x,y) => x.s - y.s);
-  let meetings = [];
-  if (bridge){
-    const G = JSON.parse(await bridge.postMessage({type:'agenda', from:state.date, to:state.date, fresh:!gFetched}));
-  gFetched = true;
-    meetings = G.events.filter(e => !e.allDay && e.start < Date.now()/1000);
-  }
-  if (!rows.length && !E.projects.length){
-    $('#main').innerHTML = '<div class="panel empty-state"><h3>No work recorded</h3>Pick another day from the calendar, or come back after some time at the computer.</div>';
-    return;
-  }
-  // 1) lagatar same project = ek block (3 min tak ka gap chalega)
-  const blocks = [];
+  await Promise.all([load(keys), renderMini()]);
+  const rows = rowsFor(keys).sort((x,y) => x.s - y.s);
+  const defs = RULES.projects || [];
+  // har project ka apna time: jis activity me uska link / VS Code folder mile, wo time us project ka
+  const P = Object.fromEntries(defs.map(x => [x.name, {d:0, ranges:[], titles:{}}]));
+  let other = 0;
   for (const r of rows){
-    const p = projectOf(r), L = blocks[blocks.length-1];
-    if (L && L.p === p && r.s - L.e < 180){ L.e = Math.max(L.e, r.e); L.d += r.d; add(L.apps, r.app, r.d); if (r.title && !r.priv) add(L.titles, r.title, r.d); add(L.cats, r.cat, r.d); }
-    else blocks.push({p, s:r.s, e:r.e, d:r.d, apps:{[r.app]:r.d}, titles:r.title && !r.priv ? {[r.title]:r.d} : {}, cats:{[r.cat]:r.d}});
+    const g = P[projectOf(r)];
+    if (!g){ other += r.d; continue; }
+    g.d += r.d;
+    if (r.title && !r.priv) add(g.titles, r.title, r.d);
+    const L = g.ranges[g.ranges.length-1];   // 3 min tak ka gap ek hi baar maana
+    if (L && r.s - L[1] < 180) L[1] = Math.max(L[1], r.e); else g.ranges.push([r.s, r.e]);
   }
-  // 2) project ke hisaab se: kul time + kab-kab
-  const P = {};
-  for (const bl of blocks){
-    const g = P[bl.p] = P[bl.p] || {d:0, ranges:[], apps:{}, titles:{}, cats:{}};
-    g.d += bl.d;
-    if (bl.e - bl.s >= 120) g.ranges.push([bl.s, bl.e]);
-    for (const [k,v] of Object.entries(bl.apps)) add(g.apps, k, v);
-    for (const [k,v] of Object.entries(bl.titles)) add(g.titles, k, v);
-    for (const [k,v] of Object.entries(bl.cats)) add(g.cats, k, v);
-  }
-  // manual project timers bhi
-  const lo = a.getTime()/1000, hi = addDays(b,1).getTime()/1000;
-  for (const [name, st, en] of E.projects){
-    const s0 = Math.max(st, lo), e0 = Math.min(en, hi);
-    if (e0 <= s0) continue;
-    const g = P['⏱ ' + name] = P['⏱ ' + name] || {d:0, ranges:[], apps:{}, titles:{}, cats:{}, timer:true};
-    g.d += e0 - s0; g.ranges.push([sod(s0), sod(e0)]);
-  }
-  const groups = Object.entries(P).sort((x,y) => y[1].d - x[1].d);
-  const focus = blocks.filter(bl => prodOf(sorted(bl.cats)[0][0]) === true);
-  const longest = focus.reduce((m, bl) => bl.e - bl.s > m.e - m.s ? bl : m, {s:0, e:0, p:''});
-  const switches = blocks.filter(bl => bl.d >= 60).length;
-  const focusTotal = rows.filter(r => r.prod === true).reduce((t, r) => t + r.d, 0);
-
-  const groupHtml = groups.slice(0, state.more.work ? 200 : 15).map(([p, g]) => {
-    const cat = g.timer ? null : sorted(g.cats)[0][0], col = g.timer ? 'var(--accent)' : color(cat), id = 'work:'+p, open = state.open[id];
-    const apps = sorted(g.apps).slice(0, 3).map(([k]) => k).join(', ');
+  // VS Code me aaj khule folders — project banate waqt ek click me jud jaayein
+  const ideNames = [...new Set(rows.filter(r => IDE.test(r.app) && !r.priv && r.title.includes(' — ')).map(autoProject))].slice(0, 12);
+  const editForm = (orig, name, match) => `<form class="pedit" data-peditform data-orig="${esc(orig)}">
+      <input name="name" placeholder="Project name, e.g. Website" maxlength="60" required value="${esc(name)}" aria-label="Project name">
+      <textarea name="match" rows="3" placeholder="Paste links or VS Code folder names, one per line&#10;e.g. github.com/you/website&#10;website-repo" aria-label="Links or folder names">${esc(match.join('\n'))}</textarea>
+      ${ideNames.length ? `<div class="kwpick"><span class="faint">Open in VS Code today:</span>${ideNames.map(n => `<button type="button" data-addkw="${esc(n)}">+ ${esc(n)}</button>`).join('')}</div>` : ''}
+      <div class="btns"><button class="btn">Save</button><button type="button" class="btn ghost" data-pcancel>Cancel</button>
+        ${orig ? `<button type="button" class="btn ghost danger" data-pdel="${esc(orig)}">Delete project</button>` : ''}</div></form>`;
+  const list = defs.map(x => [x.name, P[x.name], x]).sort((p, q) => q[1].d - p[1].d);
+  const max = Math.max(1, ...list.map(([, g]) => g.d));
+  const html = list.map(([n, g, x]) => {
+    if (state.projEdit === n) return editForm(n, n, x.match || []);
+    const id = 'work:' + n, open = state.open[id];
     return `<div class="proj" data-open="${esc(id)}" role="button" tabindex="0" aria-expanded="${!!open}">
-      <div class="top-row"><i class="dot" style="background:${col}"></i><span class="nm" title="${esc(p)}">${esc(p)}${g.timer ? '<span class="tag">timer</span>' : ''}</span><span class="tm">${fmt(g.d)}</span></div>
-      ${g.ranges.length ? `<div class="ranges">${g.ranges.slice(0, 12).map(([s, e]) => `<span>${clock(s)} – ${clock(e)}</span>`).join('')}${g.ranges.length > 12 ? `<span>+${g.ranges.length - 12} more</span>` : ''}</div>` : ''}
-      ${apps && !g.timer ? `<div class="apps">${esc(apps)}${cat ? ' · ' + esc(cat) : ''}</div>` : ''}
+      <div class="top-row"><i class="dot" style="background:var(--accent)"></i><span class="nm" title="${esc(n)}">${esc(n)}</span><span class="tm">${g.d ? fmt(g.d) : '—'}</span></div>
+      <div class="pbar"><i style="width:${g.d / max * 100}%"></i></div>
+      <div class="kws">${(x.match || []).map(k => `<span title="${esc(k)}">${esc(k)}</span>`).join('')}${bridge ? `<button class="kwedit" data-pedit="${esc(n)}">Edit</button>` : ''}</div>
+      ${open && g.ranges.length ? `<div class="ranges">${g.ranges.filter(([s, e]) => e - s >= 60).slice(0, 20).map(([s, e]) => `<span>${clock(s)} – ${clock(e)}</span>`).join('')}</div>` : ''}
       ${open && Object.keys(g.titles).length ? `<div class="detail" style="margin-left:20px">${sorted(g.titles).slice(0, 15).map(([t, v]) =>
         `<div class="d"><span class="ttl" title="${esc(t)}">${esc(t)}</span><span class="t">${fmt(v)}</span></div>`).join('')}</div>` : ''}
     </div>`;
   }).join('');
-
-  // timeline: kaam ke blocks (2 min+), meetings, breaks — naya sabse upar
-  const items = blocks.filter(bl => bl.e - bl.s >= 120).map(bl => ({kind:'work', s:bl.s, e:bl.e, bl}));
-  for (const m of meetings) items.push({kind:'meet', s:sod(m.start), e:sod(Math.min(m.end, Date.now()/1000)), m});
-  for (const [, st, en, label] of E.away) if (!OFFLINE_WORK.includes(label)) for (const q of splitDays(st, en)) if (q.day === state.date) items.push({kind:'brk', s:q.s, e:q.e, label:label || 'Break'});
-  items.sort((x,y) => y.s - x.s);
-  const tl = items.map(it => {
-    if (it.kind === 'meet') return `<div class="blk meet"><span class="t">${clock(it.s)}<small>${clock(it.e)}</small></span><i class="bar" style="background:${esc(it.m.color)}"></i>
-      <span style="min-width:0"><div class="ttl">📅 ${esc(it.m.title)}</div><div class="sub">${esc(it.m.calendar)}</div></span><span class="d">${fmt(it.e - it.s)}</span></div>`;
-    if (it.kind === 'brk') return `<div class="blk brk"><span class="t">${clock(it.s)}<small>${clock(it.e)}</small></span><i class="bar" style="background:var(--brk)"></i>
-      <span><div class="ttl">☕ ${esc(it.label)}</div></span><span class="d">${fmt(it.e - it.s)}</span></div>`;
-    const bl = it.bl, cat = sorted(bl.cats)[0][0], top = sorted(bl.titles)[0];
-    return `<div class="blk"><span class="t">${clock(bl.s)}<small>${clock(bl.e)}</small></span><i class="bar" style="background:${color(cat)}"></i>
-      <span style="min-width:0"><div class="ttl" title="${esc(bl.p)}">${esc(bl.p)}</div><div class="sub" title="${esc(top ? top[0] : '')}">${esc(sorted(bl.apps).map(([k]) => k).join(', '))}${top && top[0] !== bl.p ? ' · ' + esc(top[0]) : ''}</div></span>
-      <span class="d">${fmt(bl.d)}</span></div>`;
-  }).join('');
-
-  $('#main').innerHTML = `<div class="stack">
-    <section class="hero"><div class="stats" style="margin-top:0;border-top:0;padding-top:0">
-      ${stat(fmt(focusTotal), 'Productive work', 'time on work, learning, communication', 'color:var(--prod)')}
-      ${stat(groups.length, 'Things worked on', 'projects, repos, docs and sites')}
-      ${stat(longest.p ? fmt(longest.e - longest.s) : '—', 'Longest focus', longest.p ? esc(longest.p) + ', ' + clock(longest.s) : 'no focus block yet')}
-      ${stat(switches, 'Switches', 'times you changed what you were on')}
-    </div></section>
-    <div class="agenda-grid">
-      <section class="panel"><h2>By project <span class="hint">click one to see files and pages</span></h2>${groupHtml}
-        ${groups.length > 15 ? `<button class="show-more" data-more="work">${state.more.work ? 'Show less' : `Show all ${groups.length}`}</button>` : ''}</section>
-      <section class="panel"><h2>Timeline <span class="hint">newest first · blocks of 2 min or more</span></h2><div class="wt">${tl || '<div class="muted">No blocks longer than 2 minutes.</div>'}</div></section>
-    </div></div>`;
+  $('#main').innerHTML = `<section class="panel"><h2>Projects <span class="hint">click one to see when and on which files</span></h2>
+    ${html || '<div class="muted" style="padding:6px 8px">No projects yet. Add one: give it a name, then paste its links or VS Code folder name. Time on them is counted here automatically.</div>'}
+    ${bridge ? state.projEdit === '__new' ? editForm('', '', []) : '<button class="gplus big" data-pnew>+ New project</button>' : ''}
+    ${defs.length && other ? `<div class="faint" style="font-size:12.5px;margin-top:12px">${fmt(other)} today was outside these projects.</div>` : ''}</section>`;
 }
 
 // ---------- agenda: meetings (Mac Calendar), reminders, tasks ----------
-let gFetched = false;   // Google Tasks pehli baar khulne pe fresh lao, baad me app har 5 min laati hai
+let gFetched = false;
+let lastTaskProject = '', taskNote = '';   // pichhla chuna project yaad rahe; doosre din ka task bane to chhota sa note   // Google Tasks pehli baar khulne pe fresh lao, baad me app har 5 min laati hai
 async function renderAgenda(){
   charts.forEach(c => c.dispose()); charts = [];
   renderMini();
@@ -902,19 +1051,31 @@ async function renderAgenda(){
       <div class="btns">${G.access === 'ask' ? '<button class="btn" data-cal>Allow calendar access</button>' : '<button class="btn" data-calsettings>Open Privacy settings</button>'}
         <button class="btn ghost" data-accounts>Open Internet Accounts</button></div>
       ${G.access === 'denied' ? '<p class="faint" style="font-size:12.5px;margin-bottom:0">Access was turned off. Turn on DeskTime under Privacy & Security → Calendars and Reminders.</p>' : ''}</section>` : '';
-  const tasks = G.tasks.map(t => `<div class="task ${t.done ? 'done' : ''}"><input type="checkbox" data-task="${t.id}" ${t.done ? 'checked' : ''} aria-label="Done">
-      <span class="ttl">${esc(t.title)}</span><span class="when">${t.due ? hm(t.due) : ''}</span><button class="del" data-deltask="${t.id}" aria-label="Delete task">×</button></div>`).join('');
+  const dayName = k => parse(k).toLocaleDateString('en-IN',{day:'numeric', month:'short'});
+  const tasks = G.tasks.map(t => {
+    const late = !t.due && t.day && t.day < state.date && !t.done;
+    return `<div class="task ${t.done ? 'done' : ''}"><input type="checkbox" data-task="${t.id}" ${t.done ? 'checked' : ''} aria-label="Done">
+      <span class="ttl">${esc(t.title)}<span class="ptag">${esc(t.project || 'General')}</span></span>
+      <span class="when ${late ? 'overdue' : ''}">${t.due ? hm(t.due) : late ? 'Overdue · ' + dayName(t.day) : ''}</span><button class="del" data-deltask="${t.id}" aria-label="Delete task">×</button></div>`;
+  }).join('');
+  const projOpts = [...new Set([...(RULES.projects || []).map(p => p.name), ...(G.projects || [])])].map(n => `<option value="${esc(n)}">`).join('');
+  const note = taskNote; taskNote = '';
   // Google Tasks: is din ke, aaj ho to purane baaki (overdue) + bina date wale bhi
   const today = todayKey();
   const gt = (G.gtasks || []).filter(t => t.due === state.date || (state.date === today && !t.done && (t.due === null || t.due < today)))
     .sort((x,y) => (x.done - y.done) || String(x.due || '9').localeCompare(String(y.due || '9')));
   const gHtml = gt.map(t => `<div class="task ${t.done ? 'done' : ''}"><input type="checkbox" data-gtask="${esc(t.id)}" data-acc="${esc(t.account)}" data-list="${esc(t.listId)}" ${t.done ? 'checked' : ''} aria-label="Done">
-      <span class="ttl" title="${esc(t.title)}">${esc(t.title)}</span>
+      <span class="ttl" title="${esc(t.notes ? t.title + '\n' + t.notes : t.title)}">${esc(t.title)}</span>
       <span class="when ${t.due && t.due < today && !t.done ? 'overdue' : ''}">${t.due === null ? 'No date' : t.due < today ? 'Overdue' : ''}</span>
       <span class="gtag" title="${esc(t.account)}">${esc(t.list)} · ${esc(t.account.split('@')[0])}</span></div>`).join('');
-  const gNote = !G.google.configured || !G.google.accounts.length
-    ? '<div class="faint" style="font-size:12.5px;margin-top:8px">Want Google Tasks (from Gemini, Spark) here too? <a href="#" data-goview="settings">Connect Google</a></div>'
-    : G.google.error ? `<div class="gerr">${esc(G.google.error)}</div>` : '';
+  const gi = G.google, gd = gi.details || gi.accounts.map(email => ({email, status:'ok'}));
+  const gChips = gd.map(a => `<span class="gchip ${a.status === 'reauth' ? 'bad' : a.status === 'ok' ? '' : 'warn'}" title="${esc(a.email)}${a.status === 'reauth' ? ' — needs reconnect' : ''}"><i></i><span>${esc(a.email)}</span></span>`).join('');
+  const gPanel = !gi.configured
+    ? `<section class="panel"><h2>Google Tasks</h2><div class="faint" style="font-size:12.5px">Want tasks from Google Tasks (Gemini, Spark) here too? It needs a one-time setup. <a href="#" data-goview="settings">Set up Google</a></div></section>`
+    : `<section class="panel"><h2>Google Tasks <span class="hint">${gd.length ? `${gd.length} ${gd.length === 1 ? 'account' : 'accounts'}` : 'not connected'}</span></h2>
+        <div class="gaccs">${gChips}<button class="gplus" data-gconnect title="Connect ${gd.length ? 'another' : 'a'} Google account">+ ${gd.length ? 'Add account' : 'Connect a Google account'}</button><span class="gmsg muted" style="font-size:12.5px"></span></div>
+        ${gHtml || `<div class="muted" style="padding:6px 8px">${gd.length ? 'No Google tasks for this day.' : 'Connect an account to see its tasks here.'}</div>`}
+        ${gi.error ? `<div class="gerr">${esc(gi.error)}</div>` : ''}</section>`;
   const rem = G.reminders.map(r => `<div class="task"><span>◦</span><span class="ttl">${esc(r.title)}</span><span class="when">${hm(r.due)}</span><span class="faint" style="font-size:12px">${esc(r.list)}</span></div>`).join('');
   $('#main').innerHTML = `<div class="stack">${connect}<div class="agenda-grid">
     <section class="panel"><h2>Schedule <span class="hint">reminder ${(RULES.settings||{}).remind_minutes ?? 10} min before</span></h2>
@@ -922,79 +1083,172 @@ async function renderAgenda(){
       ${evHtml || `<div class="muted" style="padding:8px">${G.access === 'granted' ? 'No meetings on this day.' : 'Connect your calendar to see meetings here.'}</div>`}</section>
     <div class="stack">
       <section class="panel"><h2>Tasks</h2>
-        <form class="task-form" data-taskform><input name="title" placeholder="Add a task" maxlength="200" aria-label="Task"><input name="time" type="time" aria-label="Time (optional)"><button class="btn">Add</button></form>
-        ${tasks}${gHtml}${tasks || gHtml ? '' : '<div class="muted" style="padding:6px 8px">No tasks yet. Add one with a time to get a reminder.</div>'}${gNote}</section>
+        <form class="task-form" data-taskform><input name="title" placeholder="Add a task or reminder" maxlength="200" aria-label="Task">
+          <input name="project" list="task-projects" placeholder="General" maxlength="60" value="${esc(lastTaskProject)}" aria-label="Project (empty = General)" title="Pick a project, type a new one, or leave empty for General"><datalist id="task-projects">${projOpts}</datalist>
+          <input name="day" type="date" value="${state.date}" required aria-label="Date"><input name="time" type="time" aria-label="Time (optional)"><button class="btn">Add</button></form>
+        ${note ? `<div class="task-note">${esc(note)}</div>` : ''}
+        ${tasks || '<div class="muted" style="padding:6px 8px">No tasks yet. Add one with a time to get a reminder.</div>'}</section>
+      ${gPanel}
       ${rem ? `<section class="panel"><h2>Reminders <span class="hint">from the Reminders app</span></h2>${rem}</section>` : ''}
       <div class="tipbox"><b>Tip:</b> ask Gemini or Spark to “add this to my Google Calendar at 3 pm” — it appears here and you get a reminder ${(RULES.settings||{}).remind_minutes ?? 10} minutes before. Every day at ${esc((RULES.settings||{}).schedule_time || '10:00')} you get today’s schedule.</div>
     </div></div></div>`;
 }
 
 // ---------- settings ----------
-async function googlePanel(){
+// Google Tasks card (Settings ke andar) — accounts, "+" se aur account, Google wali alerts, sign-in key
+async function googleCard(S, num, chk, tm){
   if (!bridge) return '';
   const g = JSON.parse(await bridge.postMessage({type:'googleInfo'}));
-  const accs = g.accounts.map(e => `<div class="gacc"><span>✓</span><b>${esc(e)}</b><button class="btn ghost" data-gdisc="${esc(e)}">Disconnect</button></div>`).join('');
-  return `<section class="panel settings" style="margin-top:16px"><h3>Google Tasks</h3>
-    <p class="muted" style="margin:0 0 6px">Tasks you or Gemini / Spark add to Google Tasks show up in Agenda — from one or more Google accounts. You sign in on Google’s own page; DeskTime never sees your password, and the sign-in key is kept in your Mac’s Keychain.</p>
-    ${accs || '<p class="faint" style="margin:6px 0">No Google account connected.</p>'}
+  const ago = t => { const m = Math.round((Date.now()/1000 - t)/60); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m/60)} h ago` : `${Math.round(m/1440)} d ago`; };
+  const accs = (g.details || g.accounts.map(email => ({email, status:'ok'}))).map(a => {
+    const st = a.status === 'reauth' ? '<span class="gst bad">Needs reconnect</span>'
+      : a.status === 'retry' ? `<span class="gst warn" title="${esc(a.error)}">Retrying</span>`
+      : a.status === 'offline' ? '<span class="gst warn">Offline</span>'
+      : `<span class="gst">${a.lastSynced ? 'Synced ' + ago(a.lastSynced) : 'Syncing…'}</span>`;
+    return `<div class="gacc"><span class="gico ${a.status === 'reauth' ? 'bad' : ''}">${a.status === 'reauth' ? '!' : '✓'}</span><b title="${esc(a.email)}">${esc(a.email)}</b>${st}
+      ${a.status === 'reauth' ? '<button type="button" class="btn" data-gconnect>Reconnect</button>' : ''}<button type="button" class="btn ghost" data-gdisc="${esc(a.email)}">Disconnect</button></div>`;
+  }).join('');
+  const has = g.accounts.length > 0;
+  return `<details class="panel set-card" id="set-google" ${setOpen('set-google')}><summary class="set-head"><span class="set-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="m8.5 12.2 2.4 2.4 4.6-5"/></svg></span><span class="set-tt"><b>Google Tasks</b><small data-sum="set-google"></small></span><span class="chev" aria-hidden="true"></span></summary><div class="set-body">
+    <div class="sub-h">Accounts</div>
+    ${accs || '<p class="faint" style="margin:4px 0 2px">No Google account connected yet.</p>'}
     ${g.error ? `<div class="gerr">${esc(g.error)}</div>` : ''}
-    <details class="steps" ${g.configured ? '' : 'open'}><summary>One-time setup: create your own Google sign-in key (about 5 minutes)</summary><ol>
+    <div class="save-row" style="margin-top:10px"><button type="button" class="gplus big" style="margin-top:0" data-gconnect ${g.configured ? '' : 'disabled'}>+ ${has ? 'Connect another Google account' : 'Connect a Google account'}</button><span class="gmsg muted" style="font-size:12.5px"></span></div>
+    ${g.configured ? '' : '<p class="faint" style="font-size:12.5px;margin:6px 0 0">First finish the one-time setup at the bottom of this card.</p>'}
+    <div class="sub-h">Alerts</div>
+    <label class="field"><span>Alert me when a new task arrives<small>For example one Gemini just added</small></span>${chk('notify_gtask_new', S.notify_gtask_new !== false)}</label>
+    <label class="field"><span>Remind me about tasks due today at<small>Google shares only a task’s date, not its time</small></span><span class="ctl">${chk('notify_gtask_due', S.notify_gtask_due !== false)}<span class="dep" data-dep="notify_gtask_due">${tm('gtask_due_time', S.gtask_due_time || '09:00')}</span></span></label>
+    <label class="field"><span>Check for new tasks every</span><span class="ctl">${num('gtask_sync_minutes', S.gtask_sync_minutes ?? 5, 1, 60)} min</span></label>
+    <details class="steps" style="margin-top:14px" ${g.configured ? '' : 'open'}><summary>${g.configured ? 'Google sign-in key — already set up' : 'One-time setup: create your own Google sign-in key (about 5 minutes)'}</summary><ol>
       <li>Open <b>console.cloud.google.com</b> and create a project called “DeskTime”.</li>
       <li><b>APIs &amp; Services → Library</b>: search “Google Tasks API” and click <b>Enable</b>.</li>
       <li><b>OAuth consent screen</b>: choose <b>External</b>, app name “DeskTime”, your email. Then click <b>Publish app</b> (otherwise Google signs you out every 7 days). Google will say it’s unverified — that’s fine for your own use.</li>
       <li><b>Credentials → Create credentials → OAuth client ID</b> → type <b>Desktop app</b>.</li>
-      <li>Copy the <b>Client ID</b> and <b>Client secret</b> into the boxes below and click Save.</li>
-      <li>Click <b>Connect a Google account</b>. On Google’s “unverified app” page choose <b>Advanced → Go to DeskTime</b>. Repeat for your other account.</li></ol></details>
-    <div class="gform"><input id="gcid" placeholder="Client ID" value="${esc(g.clientId)}" aria-label="Client ID" autocomplete="off">
-      <input id="gsec" type="password" placeholder="${g.configured ? 'Client secret saved' : 'Client secret'}" aria-label="Client secret" autocomplete="off">
-      <button class="btn ghost" data-gsave>Save</button></div>
-    <div class="save-row" style="margin-top:6px"><button class="btn" data-gconnect ${g.configured ? '' : 'disabled'}>Connect a Google account</button><span id="gmsg" class="muted"></span></div>
-  </section>`;
+      <li>Copy the <b>Client ID</b> and <b>Client secret</b> into the boxes below and click Save key.</li>
+      <li>Click <b>+ Connect a Google account</b>. On Google’s “unverified app” page choose <b>Advanced → Go to DeskTime</b>. Click <b>+</b> again for each other account.</li></ol>
+    <p class="faint" style="font-size:12.5px;margin:0 0 4px">You sign in on Google’s own page — DeskTime never sees your password. The sign-in key stays in your Mac’s Keychain.</p>
+    <div class="gform"><input id="gcid" data-nosave placeholder="Client ID" value="${esc(g.clientId)}" aria-label="Client ID" autocomplete="off">
+      <input id="gsec" data-nosave type="password" placeholder="${g.configured ? 'Client secret saved' : 'Client secret'}" aria-label="Client secret" autocomplete="off">
+      <button type="button" class="btn ghost" data-gsave>Save key</button></div></details>
+  </div></details>`;
 }
 
 async function renderSettings(){
   charts.forEach(c => c.dispose()); charts = [];
   renderMini();
-  $('#label').textContent = 'Settings'; $('#sublabel').textContent = 'Goals, alerts, privacy and data';
+  $('#label').textContent = 'Settings'; $('#sublabel').textContent = bridge ? 'Changes save automatically' : 'Open the DeskTime app to change settings';
   history.replaceState(null, '', `#settings/${state.date}`);
   const S = RULES.settings || {}, P = RULES.private || {}, dis = bridge ? '' : 'disabled';
-  const num = (k, v, min, max, step=1) => `<input type="number" name="${k}" value="${v}" min="${min}" max="${max}" step="${step}" ${dis}>`;
-  const chk = (k, v) => `<input type="checkbox" name="${k}" ${v ? 'checked' : ''} ${dis}>`;
-  const keep = S.retention_days || 0;
-  $('#main').innerHTML = `<form class="panel settings" id="settingsForm">
-    ${bridge ? '' : '<p class="muted" style="margin-top:0">Open the DeskTime app (menu bar → Open Dashboard) to change settings.</p>'}
-    <h3>Goal</h3>
-    <label class="field"><span>Daily productive goal<small>Used for Effectiveness and the goal alert</small></span><span>${num('goal_hours', RULES.goal_hours || 8, 1, 16, 0.5)} h</span></label>
-    <h3>Tracking</h3>
-    <label class="field"><span>Count me as away after<small>No keyboard or mouse for this long</small></span><span>${num('idle_minutes', S.idle_minutes || 2, 1, 30)} min</span></label>
-    <label class="field"><span>Ask about breaks longer than<small>They show up under “Away from computer” to label</small></span><span>${num('away_minutes', S.away_minutes || 15, 5, 120, 5)} min</span></label>
-    <h3>Alerts</h3>
-    <label class="field"><span>When I reach my daily goal</span>${chk('notify_goal', S.notify_goal !== false)}</label>
-    <label class="field"><span>When I’m on social media or entertainment for<small>One gentle reminder per stretch</small></span><span>${chk('notify_distraction', S.notify_distraction !== false)} ${num('distraction_minutes', S.distraction_minutes || 30, 5, 180, 5)} min</span></label>
-    <label class="field"><span>When I come back from a long break<small>A reminder to label it</small></span>${chk('notify_away', !!S.notify_away)}</label>
-    <h3>Privacy</h3>
-    <label class="field"><span>Extra private websites<small>One per line. Only the site name is saved, never the page or link.</small></span><textarea name="sites" ${dis} placeholder="example.com">${esc((P.sites||[]).join('\n'))}</textarea></label>
-    <label class="field"><span>Extra private words<small>If a link or window title contains one of these, its content isn’t saved.</small></span><textarea name="words" ${dis} placeholder="salary">${esc((P.words||[]).join('\n'))}</textarea></label>
-    <p class="faint" style="font-size:12.5px">Always private: password fields, email, messages, password managers, login, banking, payment and API-key pages.</p>
-    <h3>Agenda</h3>
-    <label class="field"><span>Remind me before meetings and tasks<small>0 turns reminders off</small></span><span>${num('remind_minutes', S.remind_minutes ?? 10, 0, 60)} min</span></label>
-    <label class="field"><span>Send today’s schedule every day at<small>Meetings and tasks for the day</small></span><span>${chk('notify_schedule', S.notify_schedule !== false)} <input type="time" name="schedule_time" value="${esc(S.schedule_time || '10:00')}" ${dis} style="border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:5px 8px;color:var(--ink)"></span></label>
-    <h3>Data</h3>
-    <label class="field"><span>Keep history for<small>A backup is saved every day (last 14 kept) in the data folder</small></span>
-      <select name="retention_days" ${dis}>${[[0,'Forever'],[365,'1 year'],[180,'6 months'],[90,'3 months']].map(([v,l]) => `<option value="${v}" ${+keep===v?'selected':''}>${l}</option>`).join('')}</select></label>
-    ${bridge ? '<div class="save-row"><button class="btn">Save settings</button><span id="savedMsg"></span></div>' : ''}
-  </form>` + await googlePanel();
+  const num = (k, v, min, max, step=1) => `<input type="number" name="${k}" value="${v}" min="${min}" max="${max}" step="${step}" ${dis} aria-label="${k.replace(/_/g,' ')}">`;
+  const chk = (k, v) => `<input type="checkbox" class="sw-chk" name="${k}" ${v ? 'checked' : ''} ${dis}>`;
+  const tm = (k, v) => `<input type="time" name="${k}" value="${esc(v)}" ${dis}>`;
+  const keep = S.retention_days || 0, days = S.office_days || [0,1,2,3,4,5,6];
+  const google = await googleCard(S, num, chk, tm);
+  $('#main').innerHTML = `<div class="set-wrap">
+    <div class="set-top"><span class="faint">Click a card to open it</span><span class="set-status" id="savedMsg" role="status">${bridge ? '' : 'Read only'}</span></div>
+    <form class="set-cards" id="settingsForm" autocomplete="off">
+    <details class="panel set-card" id="set-work" ${setOpen('set-work')}><summary class="set-head"><span class="set-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg></span><span class="set-tt"><b>Goal &amp; office hours</b><small data-sum="set-work"></small></span><span class="chev" aria-hidden="true"></span></summary><div class="set-body">
+      <label class="field"><span>Daily productive goal<small>Used for Effectiveness and the goal alert</small></span><span class="ctl">${num('goal_hours', RULES.goal_hours || 8, 1, 16, 0.5)} h</span></label>
+      <label class="field"><span>Split office and personal time<small>Time outside office hours goes to <b>Personal</b> — it doesn’t count for or against productivity, and distraction alerts stay quiet.</small></span>${chk('office_on', S.office_on !== false)}</label>
+      <div class="dep" data-dep="office_on">
+        <label class="field"><span>Office hours</span><span class="ctl">${tm('office_start', S.office_start || '09:00')}<span class="faint">to</span>${tm('office_end', S.office_end || '21:00')}</span></label>
+        <div class="field"><span>Office days<small>Days not ticked count as personal</small></span><span class="days-pick">${[1,2,3,4,5,6,0].map(d =>
+          `<label><input type="checkbox" name="office_days" value="${d}" ${days.includes(d) ? 'checked' : ''} ${dis}>${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]}</label>`).join('')}</span></div>
+      </div>
+    </div></details>
+    <details class="panel set-card" id="set-breaks" ${setOpen('set-breaks')}><summary class="set-head"><span class="set-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 9h11v5.5a4.5 4.5 0 0 1-4.5 4.5h-2a4.5 4.5 0 0 1-4.5-4.5V9Z"/><path d="M15.5 10.5h1.25a2.25 2.25 0 0 1 0 4.5H15.3"/><path d="M8 3.5v2.5M11.5 3.5v2.5"/></svg></span><span class="set-tt"><b>Breaks</b><small data-sum="set-breaks"></small></span><span class="chev" aria-hidden="true"></span></summary><div class="set-body">
+      <label class="field"><span>Count me as away after<small>No keyboard or mouse for this long</small></span><span class="ctl">${num('idle_minutes', S.idle_minutes || 2, 1, 30)} min</span></label>
+      <label class="field"><span>List breaks longer than<small>They show under “Breaks &amp; away” on the Day page, where you can name them or fix the time</small></span><span class="ctl">${num('away_minutes', S.away_minutes || 5, 2, 120, 1)} min</span></label>
+      <label class="field"><span>Remind me to name a break when I’m back</span>${chk('notify_away', !!S.notify_away)}</label>
+    </div></details>
+    <details class="panel set-card" id="set-alerts" ${setOpen('set-alerts')}><summary class="set-head"><span class="set-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15l1.5-2Z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></span><span class="set-tt"><b>Alerts</b><small data-sum="set-alerts"></small></span><span class="chev" aria-hidden="true"></span></summary><div class="set-body">
+      <label class="field"><span>When I reach my daily goal</span>${chk('notify_goal', S.notify_goal !== false)}</label>
+      <label class="field"><span>When I’m on social media or entertainment for<small>One gentle reminder per stretch, only in office hours</small></span><span class="ctl">${chk('notify_distraction', S.notify_distraction !== false)}<span class="dep" data-dep="notify_distraction">${num('distraction_minutes', S.distraction_minutes || 30, 5, 180, 5)} min</span></span></label>
+    </div></details>
+    <details class="panel set-card" id="set-agenda" ${setOpen('set-agenda')}><summary class="set-head"><span class="set-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span><span class="set-tt"><b>Calendar &amp; task reminders</b><small data-sum="set-agenda"></small></span><span class="chev" aria-hidden="true"></span></summary><div class="set-body">
+      <label class="field"><span>Remind me before meetings and tasks<small>0 turns these reminders off</small></span><span class="ctl">${num('remind_minutes', S.remind_minutes ?? 10, 0, 60)} min</span></label>
+      <label class="field"><span>Send today’s schedule every day at<small>Meetings and tasks for the day, in one notification</small></span><span class="ctl">${chk('notify_schedule', S.notify_schedule !== false)}<span class="dep" data-dep="notify_schedule">${tm('schedule_time', S.schedule_time || '10:00')}</span></span></label>
+    </div></details>
+    ${google}
+    <details class="panel set-card" id="set-privacy" ${setOpen('set-privacy')}><summary class="set-head"><span class="set-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span><span class="set-tt"><b>Privacy</b><small data-sum="set-privacy"></small></span><span class="chev" aria-hidden="true"></span></summary><div class="set-body">
+      <div class="always-private"><b>Always private:</b> password fields, email, messages, password managers, login, banking, payment and API-key pages — only the app or site name is saved.</div>
+      <label class="field"><span>Extra private websites<small>One per line. Only the site name is saved, never the page or link.</small></span><textarea name="sites" ${dis} placeholder="example.com">${esc((P.sites||[]).join('\n'))}</textarea></label>
+      <label class="field"><span>Extra private words<small>If a link or window title contains one of these, its content isn’t saved.</small></span><textarea name="words" ${dis} placeholder="salary">${esc((P.words||[]).join('\n'))}</textarea></label>
+    </div></details>
+    <details class="panel set-card" id="set-data" ${setOpen('set-data')}><summary class="set-head"><span class="set-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6.5" rx="7" ry="2.75"/><path d="M5 6.5v11c0 1.5 3.1 2.75 7 2.75s7-1.25 7-2.75v-11"/><path d="M5 12c0 1.5 3.1 2.75 7 2.75s7-1.25 7-2.75"/></svg></span><span class="set-tt"><b>Data</b><small data-sum="set-data"></small></span><span class="chev" aria-hidden="true"></span></summary><div class="set-body">
+      <label class="field"><span>Keep history for<small>Everything stays on this Mac. A backup is saved every day (last 14 kept).</small></span>
+        <select name="retention_days" ${dis}>${[[0,'Forever'],[365,'1 year'],[180,'6 months'],[90,'3 months']].map(([v,l]) => `<option value="${v}" ${+keep===v?'selected':''}>${l}</option>`).join('')}</select></label>
+    </div></details>
+    </form></div>`;
+  $('#foot').textContent = '';
+  syncDeps();
 }
 
+// checkbox band ho to uske saath wali setting halki (disable nahi — warna value save nahi hoti)
+function syncDeps(){
+  setSummaries();
+  const f = $('#settingsForm');
+  if (f) f.querySelectorAll('[data-dep]').forEach(el => el.classList.toggle('off', !f.elements[el.dataset.dep]?.checked));
+}
+
+let saveTimer = null;
 async function saveSettings(form){
   const f = new FormData(form), n = k => parseFloat(f.get(k)), lines = k => String(f.get(k)||'').split('\n').map(x => x.trim()).filter(Boolean);
+  $('#savedMsg').textContent = 'Saving…';
   RULES = JSON.parse(await bridge.postMessage({type:'saveSettings', goal_hours:n('goal_hours'),
     settings:{idle_minutes:n('idle_minutes'), away_minutes:n('away_minutes'), distraction_minutes:n('distraction_minutes'), retention_days:n('retention_days'),
               notify_goal:f.has('notify_goal'), notify_distraction:f.has('notify_distraction'), notify_away:f.has('notify_away'),
-              remind_minutes:n('remind_minutes'), notify_schedule:f.has('notify_schedule'), schedule_time:String(f.get('schedule_time') || '10:00')},
+              remind_minutes:n('remind_minutes'), notify_schedule:f.has('notify_schedule'), schedule_time:String(f.get('schedule_time') || '10:00'),
+              notify_gtask_new:f.has('notify_gtask_new'), notify_gtask_due:f.has('notify_gtask_due'),
+              gtask_due_time:String(f.get('gtask_due_time') || '09:00'), gtask_sync_minutes:n('gtask_sync_minutes'),
+              office_on:f.has('office_on'), office_start:String(f.get('office_start') || '09:00'), office_end:String(f.get('office_end') || '21:00'),
+              office_days:f.getAll('office_days').map(Number)},
     private:{sites:lines('sites'), words:lines('words')}}));
+  withPersonal(RULES);
   memo = new Map();
-  $('#savedMsg').innerHTML = '<span class="saved">Saved</span>';
+  if ($('#savedMsg')) $('#savedMsg').innerHTML = '<span class="saved">✓ Saved</span>';
+}
+document.addEventListener('change', ev => {
+  const form = ev.target.closest('#settingsForm');
+  if (!form || !bridge || ev.target.matches('[data-nosave]')) return;
+  syncDeps();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => saveSettings(form), 300);
+});
+// kaunse cards khule hain — yaad rakho (Reconnect / refresh ke baad bhi wahi khule rahein)
+const openCards = new Set((() => { try { return JSON.parse(localStorage.getItem('dt-set-open') || '[]'); } catch (e) { return []; } })());
+const setOpen = id => openCards.has(id) ? 'open' : '';
+document.addEventListener('toggle', ev => {
+  const d = ev.target;
+  if (!d.matches || !d.matches('details.set-card')) return;
+  d.open ? openCards.add(d.id) : openCards.delete(d.id);
+  try { localStorage.setItem('dt-set-open', JSON.stringify([...openCards])); } catch (e) {}
+}, true);
+// band card pe ek line: abhi kya set hai
+function setSummaries(){
+  const f = $('#settingsForm');
+  if (!f) return;
+  const v = k => f.elements[k]?.value, on = k => !!f.elements[k]?.checked;
+  const t12 = hm => { const [h, m] = String(hm || '0:0').split(':').map(Number); return `${(h % 12) || 12}${m ? ':' + pad(m) : ''} ${h < 12 ? 'AM' : 'PM'}`; };
+  const lines = k => String(v(k) || '').split('\n').filter(x => x.trim()).length;
+  const days = [...f.querySelectorAll('input[name=office_days]:checked')].map(x => +x.value);
+  const dayTxt = days.length === 7 ? 'every day' : !days.length ? 'no office days'
+    : days.length === 6 && !days.includes(0) ? 'Mon–Sat' : days.length === 5 && !days.includes(0) && !days.includes(6) ? 'Mon–Fri' : `${days.length} days a week`;
+  const S = {
+    'set-work': `${v('goal_hours')}h goal · ` + (on('office_on') ? `office ${t12(v('office_start'))} – ${t12(v('office_end'))}, ${dayTxt}` : 'no office hours'),
+    'set-breaks': `away after ${v('idle_minutes')} min · breaks over ${v('away_minutes')} min are listed`,
+    'set-alerts': [on('notify_goal') && 'goal reached', on('notify_distraction') && `distraction after ${v('distraction_minutes')} min`].filter(Boolean).join(' · ') || 'all off',
+    'set-agenda': (+v('remind_minutes') ? `${v('remind_minutes')} min before meetings` : 'no meeting reminders') + (on('notify_schedule') ? ` · daily schedule at ${t12(v('schedule_time'))}` : ''),
+    'set-privacy': 'passwords, email and login pages always private' + (lines('sites') + lines('words') ? ` · ${lines('sites') + lines('words')} extra` : ''),
+    'set-data': f.elements.retention_days ? `keep ${f.elements.retention_days.selectedOptions[0].text.toLowerCase()} · daily backup` : '',
+  };
+  for (const [id, txt] of Object.entries(S)){ const el = document.querySelector(`[data-sum="${id}"]`); if (el) el.textContent = txt; }
+  const g = document.querySelector('[data-sum="set-google"]');
+  if (g){
+    const n = document.querySelectorAll('#set-google .gacc').length, bad = document.querySelectorAll('#set-google .gico.bad').length;
+    g.textContent = (n ? `${n} ${n === 1 ? 'account' : 'accounts'} connected` : 'no account connected') + (bad ? ` · ${bad} needs reconnect` : '') + (n ? ` · checks every ${v('gtask_sync_minutes')} min` : '');
+    g.classList.toggle('bad', bad > 0);
+  }
 }
 
 // ---------- export ----------
@@ -1027,11 +1281,14 @@ function mk(id, opt){
 function drawCharts(rows, A, keys){
   if (!hasCharts){ document.querySelectorAll('.chart').forEach(el => el.innerHTML = '<div class="muted">Charts couldn’t load.</div>'); return; }
   const cats = catOrder().filter(c => A.byCat[c]).map(c => [c, A.byCat[c]]);
+  // Donut ka size panel ki chaudai se — legend hamesha donut ke right me, upar chadhe nahi
+  const cw = $('#catChart').clientWidth || 400, ch = $('#catChart').clientHeight || 240;
+  const outer = Math.max(60, Math.min(ch/2 - 12, cw * 0.22)), cx = outer + 6;
   mk('catChart', {
     tooltip:{...base().tooltip, formatter:p => `<b>${esc(p.name)}</b><br>${fmt(p.value)} · ${p.percent}%`},
-    legend:{orient:'vertical', right:0, top:'middle', icon:'roundRect', itemWidth:9, itemHeight:9, textStyle:{color:css('--muted')},
+    legend:{orient:'vertical', left:cx + outer + 24, right:0, top:'middle', icon:'roundRect', itemWidth:9, itemHeight:9, textStyle:{color:css('--muted')},
             formatter:n => `${n}  ${fmt(A.byCat[n])}`},
-    series:[{type:'pie', radius:['56%','80%'], center:['32%','50%'], avoidLabelOverlap:true, label:{show:true, position:'center', formatter:() => `${pct(A.prod,A.total)}%\nproductive`,
+    series:[{type:'pie', radius:[outer*0.7, outer], center:[cx, '50%'], avoidLabelOverlap:true, label:{show:true, position:'center', formatter:() => `${pct(A.prod,A.total)}%\nproductive`,
             fontFamily:css('--num'), fontSize:17, fontWeight:600, color:css('--ink'), lineHeight:22},
             emphasis:{scale:true, scaleSize:4, label:{show:true}}, itemStyle:{borderColor:css('--surface'), borderWidth:2, borderRadius:4},
             data:cats.map(([c,v]) => ({name:c, value:v, itemStyle:{color:color(c)}}))}]
@@ -1066,7 +1323,12 @@ function drawCharts(rows, A, keys){
     if (c) c.on('click', p => { state.view = 'day'; state.date = keys[p.dataIndex]; render(); });
   }
 }
-addEventListener('resize', () => charts.forEach(c => c.resize()));
+let resizeT = null;
+addEventListener('resize', () => {
+  charts.forEach(c => c.resize());
+  // donut ka size chaudai pe tika hai — resize ruke to dobara banao
+  if ($('#catChart')){ clearTimeout(resizeT); resizeT = setTimeout(render, 250); }
+});
 
 // ---------- mini calendar ----------
 async function renderMini(){
@@ -1097,7 +1359,13 @@ function bindRibbon(rows){
     if (!el){ tip.style.display = 'none'; return; }
     if (el.dataset.b !== undefined){
       const b = JSON.parse(rb.dataset.breaks)[+el.dataset.b];
-      tip.innerHTML = `<b>☕ ${esc(b.label)}</b><span class="o">${clock(b.s)} – ${clock(b.e)} · ${fmt(b.d)} away</span>`;
+      tip.innerHTML = `<b>☕ ${esc(b.label)}</b><span class="o">${clock(b.s)} – ${clock(b.e)} · ${fmt(b.d)} away${b.id && bridge ? ' · click to edit' : ''}</span>`;
+      tip.style.display = 'block'; tip.style.left = Math.min(ev.clientX + 14, innerWidth - 440) + 'px'; tip.style.top = (ev.clientY + 16) + 'px';
+      return;
+    }
+    if (el.dataset.g !== undefined){
+      const g = JSON.parse(rb.dataset.gaps)[+el.dataset.g];
+      tip.innerHTML = `<b>No activity</b><span class="o">${clock(g.s)} – ${clock(g.e)} · ${fmt(g.d)}${bridge ? ' · click to name it' : ''}</span>`;
       tip.style.display = 'block'; tip.style.left = Math.min(ev.clientX + 14, innerWidth - 440) + 'px'; tip.style.top = (ev.clientY + 16) + 'px';
       return;
     }
@@ -1112,6 +1380,39 @@ function bindRibbon(rows){
   rb.addEventListener('mouseleave', () => tip.style.display = 'none');
 }
 
+// ---------- projects: banana, badalna, hatana ----------
+async function saveProjects(list){
+  RULES = withPersonal(JSON.parse(await bridge.postMessage({type:'saveSettings', projects:list})));
+  memo = new Map(); state.projEdit = null;
+  return render();
+}
+// paste kiya link "https://www.site.com/x/" → "site.com/x", taaki kisi bhi roop me khula ho to mile
+const kwList = txt => [...new Set(String(txt).split(/[\n,]/).map(cleanKw).filter(Boolean))];
+document.addEventListener('click', async ev => {
+  const t = ev.target;
+  if (t.closest('[data-pnew]')){ state.projEdit = '__new'; return render(); }
+  const ed = t.closest('[data-pedit]');
+  if (ed){ state.projEdit = ed.dataset.pedit; return render(); }
+  if (t.closest('[data-pcancel]')){ state.projEdit = null; return render(); }
+  const kw = t.closest('[data-addkw]');
+  if (kw){ const ta = kw.closest('form').elements.match, have = kwList(ta.value), k = kw.dataset.addkw.toLowerCase();
+    if (!have.includes(k)) ta.value = (ta.value.trim() ? ta.value.trim() + '\n' : '') + kw.dataset.addkw;
+    const nm = kw.closest('form').elements.name; if (!nm.value.trim()) nm.value = kw.dataset.addkw;
+    return; }
+  const del = t.closest('[data-pdel]');
+  if (del && bridge) return saveProjects((RULES.projects || []).filter(p => p.name !== del.dataset.pdel));
+});
+document.addEventListener('submit', ev => {
+  if (!ev.target.matches('[data-peditform]') || !bridge) return;
+  ev.preventDefault(); ev.stopPropagation();
+  const f = ev.target.elements, name = f.name.value.trim(), orig = ev.target.dataset.orig;
+  if (!name) return;
+  const match = kwList(f.match.value);
+  const list = (RULES.projects || []).filter(p => p.name !== orig && p.name !== name);
+  list.push({name, match: match.length ? match : [name.toLowerCase()]});
+  saveProjects(list);
+}, true);
+
 // ---------- events ----------
 document.addEventListener('click', ev => {
   const t = ev.target;
@@ -1121,26 +1422,29 @@ document.addEventListener('click', ev => {
   const tab = t.closest('[data-tab]');      if (tab){ state.tab = tab.dataset.tab; state.filter = 'all'; return render(); }
   const f = t.closest('[data-filter]');     if (f){ state.filter = f.dataset.filter; return render(); }
   const more = t.closest('[data-more]');    if (more){ state.more[more.dataset.more] = !state.more[more.dataset.more]; return render(); }
-  const open = t.closest('[data-open]');    if (open && !t.closest('.detail')){ const k = open.dataset.open; state.open[k] = !state.open[k]; return render(); }
+  const open = t.closest('[data-open]');    if (open && !t.closest('.detail, .kws')){ const k = open.dataset.open; state.open[k] = !state.open[k]; return render(); }
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && e.target.matches('[data-open]')) { e.target.click(); return; }
+  if (e.key === 'Enter' && e.target.matches('[data-open], .away-row[data-away]')) { e.target.click(); return; }
   if (e.target.matches('input, select') || e.metaKey || e.ctrlKey || e.altKey) return;
   if (e.key === 'ArrowLeft') move(-1);
   else if (e.key === 'ArrowRight' && !$('#next').disabled) move(1);
-  else if ('dwmak,'.includes(e.key)){ state.view = {d:'day', w:'week', m:'month', a:'agenda', k:'work', ',':'settings'}[e.key]; render(); }
+  else if ('dwmakp,'.includes(e.key)){ state.view = {d:'day', w:'week', m:'month', a:'agenda', k:'work', p:'work', ',':'settings'}[e.key]; render(); }
   else if (e.key === 't') goToday();
   else if (e.key === '/'){ e.preventDefault(); $('#q').focus(); }
 });
 document.addEventListener('submit', async ev => {
   ev.preventDefault();
-  if (ev.target.id === 'settingsForm' && bridge) return saveSettings(ev.target);
+  if (ev.target.id === 'settingsForm' && bridge){ if (ev.submitter?.matches('[data-gsave]')) return; return saveSettings(ev.target); }
   if (ev.target.matches('[data-taskform]') && bridge){
     const title = ev.target.title.value.trim(), tm = ev.target.time.value;
+    const project = ev.target.project.value.trim(), day = ev.target.day.value || state.date;
     if (!title) return;
     let due = null;
-    if (tm){ const [h, m] = tm.split(':').map(Number); const d = parse(state.date); d.setHours(h, m, 0, 0); due = d.getTime()/1000; }
-    await bridge.postMessage({type:'addTask', title, due});
+    if (tm){ const [h, m] = tm.split(':').map(Number); const d = parse(day); d.setHours(h, m, 0, 0); due = d.getTime()/1000; }
+    await bridge.postMessage({type:'addTask', title, due, day: tm ? null : day, project});
+    lastTaskProject = project;
+    if (day !== state.date) taskNote = `Added for ${parse(day).toLocaleDateString('en-IN',{weekday:'long', day:'numeric', month:'short'})}${tm ? ' at ' + tm : ''} — open that day to see it.`;
     return render();
   }
   if (ev.target.matches('[data-pform]') && bridge){
@@ -1155,6 +1459,12 @@ document.addEventListener('click', async ev => {
   if (t.closest('[data-cal]')){ await bridge.postMessage({type:'requestCalendar'}); return render(); }
   if (t.closest('[data-accounts]')) return bridge.postMessage({type:'openSettings'});
   if (t.closest('[data-calsettings]')) return bridge.postMessage({type:'openPrivacy'});
+  const ed = t.closest('[data-away]:not(select)');
+  if (ed){ return openBreak(+ed.dataset.away); }
+  if (t.closest('[data-addaway]')) return openBreak(0);
+  const gp = t.closest('[data-gap]');
+  if (gp){ const [gs, ge] = gp.dataset.gap.split(',').map(Number), base = parse(state.date).getTime()/1000;
+    $('#tip').style.display = 'none'; return openBreak(0, {st:base + gs, en:base + ge}); }
   const gv = t.closest('[data-goview]');
   if (gv){ ev.preventDefault(); return goView(gv.dataset.goview); }
   if (t.closest('[data-gsave]')){
@@ -1162,13 +1472,13 @@ document.addEventListener('click', async ev => {
     return render();
   }
   if (t.closest('[data-gconnect]')){
-    t.closest('[data-gconnect]').disabled = true;
-    $('#gmsg').textContent = 'Finish signing in in your browser…';
+    document.querySelectorAll('[data-gconnect]').forEach(b => b.disabled = true);
+    document.querySelectorAll('.gmsg').forEach(m => m.textContent = 'Finish signing in in your browser — pick the account you want to add…');
     const r = JSON.parse(await bridge.postMessage({type:'googleConnect'}));
     gFetched = false;
     await render();
-    if (r.error && $('#gmsg')) $('#gmsg').innerHTML = `<span class="gerr">${esc(r.error)}</span>`;
-    else if ($('#gmsg')) $('#gmsg').innerHTML = '<span class="saved">Connected</span>';
+    const m = document.querySelector('.gmsg');
+    if (m) m.innerHTML = r.error ? `<span class="gerr">${esc(r.error)}</span>` : '<span class="saved">Connected ✓</span>';
     return;
   }
   const gd = t.closest('[data-gdisc]');
@@ -1191,7 +1501,7 @@ document.addEventListener('change', async ev => {
   if (aw && bridge){ await bridge.postMessage({type:'setAwayLabel', id:+aw.dataset.away, label:aw.value}); extras = {}; return render(); }
   const s = ev.target.closest('select[data-kind]');
   if (!s || !bridge) return;
-  RULES = JSON.parse(await bridge.postMessage({type:'setCategory', kind:s.dataset.kind, key:s.dataset.key, cat:s.value}));
+  RULES = withPersonal(JSON.parse(await bridge.postMessage({type:'setCategory', kind:s.dataset.kind, key:s.dataset.key, cat:s.value})));
   memo = new Map();
   render();
 });
@@ -1220,7 +1530,7 @@ document.querySelectorAll('#theme button').forEach(b => b.onclick = () => { setT
 window.refresh = () => {
   delete cache[todayKey()]; delete summary[todayKey()]; extras = {};
   const busy = ['SELECT','INPUT','TEXTAREA'].includes(document.activeElement?.tagName);
-  if (!busy && state.view !== 'settings') render();
+  if (!busy && state.view !== 'settings' && !$('#brkDlg').open) render();
 };
 $('#csv').onclick = exportCSV;
 $('#print').onclick = () => bridge ? bridge.postMessage({type:'print'}) : print();

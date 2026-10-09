@@ -43,6 +43,12 @@
       "color": "#9aa3b2",
       "dark": "#5f6a7d",
       "productive": null
+    },
+    "Personal": {
+      "slot": 8,
+      "color": "#4fa3b5",
+      "dark": "#4b97a8",
+      "productive": null
     }
   },
   "domains": {
